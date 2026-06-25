@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), bluetooth=(), hid=(), usb=(), serial=(), speech-synthesis=(), speech-recognition=()">
+<title>Custom Auth — Proof of Claw</title>
+<meta name="description" content="Add custom authentication secrets">
+<link rel="icon" type="image/x-icon" href="public/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="public/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="public/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="public/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+/* ═══ TOPBAR ═══ */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-w);
+  right: 0;
+  height: var(--topbar-h);
+  background: rgba(6, 8, 13, 0.88);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.75rem;
+  z-index: 150;
+  transition: left 0.25s ease;
+}
+
+body.sidebar-collapsed .topbar { left: var(--sidebar-w-collapsed); }
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.topbar-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* ═══ MAIN CONTENT ═══ */
+.main-content {
+  position: relative;
+  z-index: 1;
+  margin-left: var(--sidebar-w);
+  margin-top: var(--topbar-h);
+  padding: 2rem;
+  min-height: calc(100vh - var(--topbar-h));
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  transition: margin-left 0.25s ease;
+}
+
+body.sidebar-collapsed .main-content { margin-left: var(--sidebar-w-collapsed); }
+
+@media (max-width: 768px) {
+  .topbar { left: 0; }
+  .main-content { margin-left: 0; }
+}
+
+/* ═══ FORM STYLES ═══ */
+.container {
+  max-width: 480px;
+  width: 100%;
+  padding-top: 1rem;
+}
+h1 {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+h1 span { color: var(--cyan); }
+.subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+}
+.form-card {
+  background: rgba(6, 8, 13, 0.8);
+  border: 1px solid var(--border-cyan);
+  border-radius: 16px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+}
+.form-group {
+  margin-bottom: 1.5rem;
+}
+label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+input, textarea, select {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(10, 12, 18, 0.8);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+.hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+button[type="submit"] {
+  width: 100%;
+  padding: 14px;
+  background: var(--cyan);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+button[type="submit"]:hover {
+  background: #00ffff;
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.3);
+}
+.saved-secrets {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+.saved-secrets h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: var(--cyan);
+}
+.secret-list {
+  list-style: none;
+}
+.secret-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(10, 12, 18, 0.5);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+.secret-name {
+  font-weight: 500;
+}
+.secret-tag {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  background: var(--cyan-glow);
+  color: var(--cyan);
+  border-radius: 100px;
+}
+.delete-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 100, 100, 0.3);
+  color: #ff6464;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.delete-btn:hover {
+  background: rgba(255, 100, 100, 0.1);
+}
+.empty-state {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  padding: 2rem;
+}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- ═══════ SIDEBAR ═══════ -->
+<div class="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
+<aside class="sidebar" role="complementary" aria-label="App sidebar">
+  <button class="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar">&#x276E;</button>
+  <a href="index.html" class="sidebar-logo">
+    <img src="public/logoproofofclaw.png" alt="Proof of Claw" class="claw-icon">
+    <span class="logo-text">Proof of Claw</span>
+  </a>
+  <nav class="sidebar-nav" aria-label="App navigation">
+    <a href="agents.html"><span class="nav-icon">&#x2726;</span> Agents</a>
+    <a href="dashboard.html"><span class="nav-icon">&#x25A3;</span> Dashboard</a>
+    <a href="auth-modules.html" class="active" aria-current="page"><span class="nav-icon">&#x1F512;</span> Auth Modules</a>
+    <a href="messages.html"><span class="nav-icon">&#x2709;</span> Messages</a>
+    <a href="proofs.html"><span class="nav-icon">&#x2731;</span> Proofs</a>
+    <a href="kanban.html"><span class="nav-icon">&#x25A0;</span> Kanban</a>
+    <a href="soul-vault.html"><span class="nav-icon">&#x2B23;</span> Soul Vault</a>
+    <a href="approve.html"><span class="nav-icon">&#x2714;</span> Approve</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div id="poc-connection-slot"></div>
+    <a href="soul-vault.html" class="btn-new-agent">+ New Agent</a>
+    <a href="index.html" class="btn-home">&larr; Back to Home</a>
+  </div>
+</aside>
+
+<!-- ═══════ TOPBAR ═══════ -->
+<header class="topbar" role="banner">
+  <div class="topbar-left">
+    <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Open menu">&#9776;</button>
+    <span class="topbar-title">Custom Auth</span>
+  </div>
+  <div class="topbar-right">
+    <a href="auth-modules.html" class="btn-home" style="font-size:0.7rem;">&larr; Back to Auth</a>
+  </div>
+</header>
+
+<!-- ═══════ MAIN CONTENT ═══════ -->
+<main class="main-content" role="main">
+  <div class="container">
+    <h1>&#x1F511; <span>Custom Auth</span></h1>
+    <p class="subtitle">Add your own API keys and secrets</p>
+
+    <div class="form-card">
+      <form id="custom-auth-form">
+        <div class="form-group">
+          <label for="secret-name">Secret Name</label>
+          <input type="text" id="secret-name" placeholder="e.g., botfather-key, openai-api-key" required>
+          <p class="hint">Unique identifier for this secret</p>
+        </div>
+
+        <div class="form-group">
+          <label for="secret-value">Secret Value</label>
+          <textarea id="secret-value" placeholder="Paste your API key or secret here..." required></textarea>
+          <p class="hint">The actual secret value (encrypted in storage)</p>
+        </div>
+
+        <div class="form-group">
+          <label for="secret-type">Type</label>
+          <select id="secret-type">
+            <option value="api-key">API Key</option>
+            <option value="oauth-token">OAuth Token</option>
+            <option value="password">Password</option>
+            <option value="private-key">Private Key</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="secret-service">Service</label>
+          <input type="text" id="secret-service" placeholder="e.g., telegram, openai, github">
+          <p class="hint">Optional: Which service this is for</p>
+        </div>
+
+        <button type="submit">Save Secret</button>
+      </form>
+
+      <div class="saved-secrets">
+        <h3>Saved Secrets</h3>
+        <ul class="secret-list" id="secret-list">
+          <li class="empty-state">No secrets saved yet</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="wallet.js"></script>
+<script src="nav.js"></script>
+<script src="shared.js"></script>
+<script src="env.generated.js" onerror="console.warn('env.generated.js not found — run: node scripts/build-env.js')"></script>
+<script>
+// Credentials loaded from window.__POC_ENV__ (generated by scripts/build-env.js)
+// Falls back to empty string — page degrades gracefully without 1claw sync
+const ONECLAW_API_KEY = window.__POC_ENV__?.ONECLAW_API_KEY || '';
+const ONECLAW_ENDPOINT = window.__POC_ENV__?.ONECLAW_ENDPOINT || 'https://api.1claw.xyz/v1';
+const AGENT_ID = window.__POC_ENV__?.AGENT_ID || '';
+const VAULT_ID = window.__POC_ENV__?.VAULT_ID || '';
+
+let oneClawToken = null;
+let isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+function showToast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = `position:fixed;bottom:20px;right:20px;padding:12px 20px;background:${type === 'success' ? '#0e6' : '#f36'};color:#000;border-radius:8px;z-index:10000;font-family:var(--font-mono);font-size:0.85rem;`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+async function authenticateWithOneClaw() {
+  // Skip 1claw auth on localhost due to CORS
+  if (isLocalhost) {
+    console.log('1claw: Skipping auth on localhost (CORS restricted)');
+    return false;
+  }
+
+  try {
+    const response = await fetch(`${ONECLAW_ENDPOINT}/auth/agent-token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        agent_id: AGENT_ID,
+        api_key: ONECLAW_API_KEY
+      })
+    });
+    if (!response.ok) throw new Error('Auth failed');
+    const data = await response.json();
+    oneClawToken = data.access_token;
+    return true;
+  } catch (e) {
+    console.error('1claw auth failed:', e.message || e);
+    return false;
+  }
+}
+
+function loadSavedSecrets() {
+  const secrets = JSON.parse(localStorage.getItem('poc_custom_secrets') || '{}');
+  const list = document.getElementById('secret-list');
+
+  if (Object.keys(secrets).length === 0) {
+    list.innerHTML = '<li class="empty-state">No secrets saved yet</li>';
+    return;
+  }
+
+  list.innerHTML = Object.entries(secrets).map(([name, data]) => `
+    <li class="secret-item">
+      <div>
+        <div class="secret-name">${name}</div>
+        <div style="font-size:0.7rem;color:var(--text-secondary);margin-top:2px;">
+          ${data.service || 'custom'} • ${new Date(data.createdAt).toLocaleDateString()}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="secret-tag">${data.type || 'custom'}</span>
+        <button class="delete-btn" onclick="deleteSecret('${name}')">Delete</button>
+      </div>
+    </li>
+  `).join('');
+}
+
+async function saveSecret(name, value, type, service) {
+  // Save to localStorage + Neon DB
+  const secrets = JSON.parse(localStorage.getItem('poc_custom_secrets') || '{}');
+  secrets[name] = { value, type, service, createdAt: Date.now() };
+  localStorage.setItem('poc_custom_secrets', JSON.stringify(secrets));
+  if (typeof PocPersist !== 'undefined') PocPersist.savePref('poc_custom_secrets', secrets);
+
+  // Try to sync to 1claw if connected (skip on localhost due to CORS)
+  if (!isLocalhost && oneClawToken) {
+    try {
+      await fetch(`${ONECLAW_ENDPOINT}/vaults/${VAULT_ID}/secrets`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${oneClawToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: `custom-${name}`,
+          value: value,
+          tags: { type, service, source: 'custom-auth-page' }
+        })
+      });
+      console.log(`Synced ${name} to 1claw vault`);
+    } catch (e) {
+      console.log('Failed to sync to 1claw, saved locally');
+    }
+  } else if (isLocalhost) {
+    console.log('Saved locally (1claw CORS restricted on localhost)');
+  }
+
+  return true;
+}
+
+function deleteSecret(name) {
+  const secrets = JSON.parse(localStorage.getItem('poc_custom_secrets') || '{}');
+  delete secrets[name];
+  localStorage.setItem('poc_custom_secrets', JSON.stringify(secrets));
+  if (typeof PocPersist !== 'undefined') PocPersist.savePref('poc_custom_secrets', secrets);
+  loadSavedSecrets();
+}
+
+document.getElementById('custom-auth-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const name = document.getElementById('secret-name').value.trim();
+  const value = document.getElementById('secret-value').value.trim();
+  const type = document.getElementById('secret-type').value;
+  const service = document.getElementById('secret-service').value.trim();
+
+  if (!name || !value) {
+    alert('Name and value are required');
+    return;
+  }
+
+  await saveSecret(name, value, type, service);
+
+  // Clear form
+  document.getElementById('secret-name').value = '';
+  document.getElementById('secret-value').value = '';
+  document.getElementById('secret-service').value = '';
+
+  loadSavedSecrets();
+
+  // Show success
+  const btn = document.querySelector('button[type="submit"]');
+  const originalText = btn.textContent;
+  btn.textContent = '✓ Saved!';
+  btn.style.background = '#0e6';
+  setTimeout(() => {
+    btn.textContent = originalText;
+    btn.style.background = '';
+  }, 1500);
+});
+
+// Load saved secrets on page load
+loadSavedSecrets();
+</script>
+</body>
+</html>

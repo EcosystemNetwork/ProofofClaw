@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), bluetooth=(), hid=(), usb=(), serial=(), speech-synthesis=(), speech-recognition=()">
+<meta name="description" content="Verify and inspect cryptographic proofs of agent behavior.">
+<title>Proof Verification — Proof of Claw</title>
+<link rel="icon" type="image/x-icon" href="public/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="public/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="public/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="public/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+/* ===================== MAIN LAYOUT ===================== */
+.main-content {
+  margin-left: 240px;
+  min-height: 100vh;
+}
+
+/* ===================== TOP BAR ===================== */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: rgba(6, 8, 13, 0.7);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.topbar-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.topbar-agent-filter select {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.topbar-agent-filter select:focus {
+  border-color: var(--cyan);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.topbar-stats {
+  display: flex;
+  gap: 1.25rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.topbar-stats span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.topbar-stats .stat-val {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.eth-badge {
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--border-cyan);
+  border-radius: 100px;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--cyan);
+  background: var(--cyan-glow);
+  white-space: nowrap;
+}
+
+/* ===================== PAGE BODY ===================== */
+.page-body {
+  padding: 1.75rem 2rem 3rem;
+}
+
+/* ===================== STATS BAR ===================== */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  transition: all 0.25s;
+}
+
+.stat-card:hover {
+  border-color: var(--border-cyan);
+  background: var(--bg-card-hover);
+}
+
+.stat-card .stat-label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.4rem;
+}
+
+.stat-card .stat-value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+}
+
+.stat-card .stat-value.green { color: var(--green); }
+.stat-card .stat-value.amber { color: var(--amber); }
+.stat-card .stat-value.cyan { color: var(--cyan); }
+
+/* ===================== FILTER BAR ===================== */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.filter-bar label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.filter-bar select {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  padding: 0.5rem 0.85rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 140px;
+}
+
+.filter-bar select:focus {
+  border-color: var(--cyan);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ===================== PROOF CARDS ===================== */
+.proofs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.proof-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.proof-card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(0, 229, 255, 0.15);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.proof-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.proof-id {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.proof-status {
+  padding: 0.35rem 0.9rem;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.proof-status.verified {
+  background: rgba(0, 230, 118, 0.1);
+  color: var(--green);
+  border: 1px solid rgba(0, 230, 118, 0.3);
+}
+
+.proof-status.pending {
+  background: rgba(255, 179, 0, 0.1);
+  color: var(--amber);
+  border: 1px solid rgba(255, 179, 0, 0.3);
+  animation: pulse-amber 2s ease-in-out infinite;
+}
+
+.proof-status.failed {
+  background: rgba(255, 61, 90, 0.1);
+  color: var(--red);
+  border: 1px solid rgba(255, 61, 90, 0.3);
+}
+
+@keyframes pulse-amber {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 179, 0, 0); }
+  50% { box-shadow: 0 0 12px rgba(255, 179, 0, 0.2); }
+}
+
+.proof-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.detail-label {
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.detail-value {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.detail-value.amber {
+  color: var(--amber);
+}
+
+.hash-value {
+  color: var(--cyan);
+  word-break: break-all;
+  font-size: 0.78rem;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.commitment-row {
+  margin-bottom: 1rem;
+}
+
+/* Expand button */
+.expand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--cyan);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 0.4rem 0.85rem;
+  transition: all 0.2s;
+}
+
+.expand-btn:hover {
+  background: rgba(0, 229, 255, 0.06);
+  border-color: var(--border-cyan);
+}
+
+.expand-btn .arrow {
+  transition: transform 0.25s;
+  display: inline-block;
+}
+
+.expand-btn.open .arrow {
+  transform: rotate(180deg);
+}
+
+/* Expandable content */
+.proof-expandable {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.3s ease;
+  opacity: 0;
+}
+
+.proof-expandable.expanded {
+  max-height: 800px;
+  opacity: 1;
+  margin-top: 1.25rem;
+}
+
+/* Policy checks */
+.policy-checks {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.policy-check {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.check-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.check-icon.pass {
+  background: rgba(0, 230, 118, 0.12);
+  color: var(--green);
+}
+
+.check-rule {
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.check-details {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Code block */
+.code-block {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  overflow-x: auto;
+  margin-bottom: 1.25rem;
+  line-height: 1.7;
+}
+
+.json-key { color: var(--cyan); }
+.json-string { color: var(--green); }
+.json-number { color: var(--amber); }
+.json-boolean { color: var(--red); }
+
+/* Chain details */
+.chain-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* Pending overlay */
+.pending-message {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 179, 0, 0.05);
+  border: 1px solid rgba(255, 179, 0, 0.15);
+  border-radius: 8px;
+  color: var(--amber);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.pending-message .spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 179, 0, 0.2);
+  border-top-color: var(--amber);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-dim);
+}
+
+.empty-state .empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  opacity: 0.4;
+}
+
+.empty-state p {
+  font-size: 0.85rem;
+}
+
+.empty-state .empty-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.empty-state .empty-actions a {
+  padding: 0.5rem 1.25rem;
+  border: 1px solid var(--border-cyan);
+  border-radius: 6px;
+  color: var(--cyan);
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.empty-state .empty-actions a:hover {
+  background: rgba(0, 229, 255, 0.08);
+}
+
+/* Search input */
+.search-input {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  padding: 0.5rem 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 200px;
+}
+
+.search-input:focus {
+  border-color: var(--cyan);
+}
+
+.search-input::placeholder {
+  color: var(--text-dim);
+}
+
+/* Refresh / auto-refresh */
+.refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.35rem 0.7rem;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+  border-color: var(--border-cyan);
+  color: var(--cyan);
+}
+
+.refresh-btn.spinning .refresh-icon {
+  animation: spin 0.8s linear infinite;
+}
+
+.auto-refresh-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+}
+
+.auto-refresh-toggle input {
+  accent-color: var(--cyan);
+}
+
+/* Copy button */
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  margin-left: 4px;
+  transition: all 0.2s;
+  vertical-align: middle;
+}
+
+.copy-btn:hover {
+  border-color: var(--border-cyan);
+  color: var(--cyan);
+}
+
+.copy-btn.copied {
+  color: var(--green);
+  border-color: rgba(0, 230, 118, 0.3);
+}
+
+/* Skeleton loading */
+.skeleton-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.skeleton-line {
+  height: 14px;
+  background: linear-gradient(90deg, var(--bg-secondary) 25%, rgba(255,255,255,0.04) 50%, var(--bg-secondary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-line.w40 { width: 40%; }
+.skeleton-line.w60 { width: 60%; }
+.skeleton-line.w80 { width: 80%; }
+.skeleton-line.w100 { width: 100%; }
+.skeleton-line.h8 { height: 8px; }
+.skeleton-line.h20 { height: 20px; }
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Live indicator */
+.live-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse-live 2s ease-in-out infinite;
+}
+
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.4); }
+  50% { opacity: 0.6; box-shadow: 0 0 8px rgba(0, 230, 118, 0.3); }
+}
+
+/* ZK badge */
+.zk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 100px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.zk-badge.zk-verified {
+  background: rgba(0, 230, 118, 0.08);
+  color: var(--green);
+  border: 1px solid rgba(0, 230, 118, 0.2);
+}
+
+.zk-badge.zk-unverified {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); z-index: 300; }
+  .sidebar.mobile-open { transform: translateX(0); }
+  .mobile-menu-btn { display: flex; }
+  .main-content { margin-left: 0; padding: 1.25rem 1rem; }
+  .stats-bar { grid-template-columns: 1fr 1fr; }
+  .proof-details-grid { grid-template-columns: 1fr 1fr; }
+  .chain-details { grid-template-columns: 1fr; }
+  .filter-bar { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+  .topbar { padding: 0.75rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
+  .topbar-right { flex-wrap: wrap; gap: 0.5rem; }
+  .topbar-stats { flex-wrap: wrap; gap: 0.5rem; }
+}
+
+@media (max-width: 480px) {
+  .main-content { padding: 1rem 0.75rem; }
+  .stats-bar { grid-template-columns: 1fr; }
+  .proof-details-grid { grid-template-columns: 1fr; }
+  .topbar-title { font-size: 1rem; }
+  .proof-card { padding: 1rem; }
+}
+</style>
+</head>
+<body class="has-grid">
+
+<a href="#proofsContainer" class="skip-link">Skip to proofs</a>
+
+<!-- ==================== SIDEBAR ==================== -->
+<aside class="sidebar" role="complementary" aria-label="App sidebar">
+  <button class="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar">&#x276E;</button>
+  <a href="index.html" class="sidebar-logo">
+    <img src="public/logoproofofclaw.png" alt="Proof of Claw" class="claw-icon">
+    <span class="logo-text">Proof of Claw</span>
+  </a>
+
+  <nav class="sidebar-nav" aria-label="App navigation">
+    <a href="agents.html"><span class="nav-icon">&#x2726;</span> Agents</a>
+    <a href="dashboard.html"><span class="nav-icon">&#x25A3;</span> Dashboard</a>
+    <a href="auth-modules.html"><span class="nav-icon">&#x1F512;</span> Auth Modules</a>
+    <a href="messages.html"><span class="nav-icon">&#x2709;</span> Messages</a>
+    <a href="proofs.html" class="active" aria-current="page"><span class="nav-icon">&#x2731;</span> Proofs</a>
+    <a href="kanban.html"><span class="nav-icon">&#x25A0;</span> Kanban</a>
+    <a href="soul-vault.html"><span class="nav-icon">&#x2B23;</span> Soul Vault</a>
+    <a href="approve.html"><span class="nav-icon">&#x2714;</span> Approve</a>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <div id="poc-connection-slot"></div>
+    <a href="soul-vault.html" class="btn-new-agent">+ New Agent</a>
+    <a href="index.html" class="btn-home">&larr; Back to Home</a>
+  </div>
+</aside>
+
+<!-- ==================== MAIN ==================== -->
+<main class="main-content" role="main">
+
+  <div class="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
+  <!-- TOP BAR -->
+  <header class="topbar" role="banner">
+    <div class="topbar-left">
+      <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Open menu">&#9776;</button>
+      <div class="topbar-title">Proof Verification</div>
+      <div class="topbar-agent-filter">
+        <select id="agentFilter" aria-label="Filter by agent">
+          <option value="">All agents</option>
+        </select>
+      </div>
+    </div>
+    <div class="topbar-right" style="display:flex;align-items:center;gap:12px;">
+      <button id="wallet-connect-btn" class="eth-badge" style="background:transparent;cursor:pointer;" onclick="connectWalletUI()">Connect Wallet</button>
+      <div id="wallet-display" style="display:none;align-items:center;gap:6px;">
+        <span id="wallet-address" style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);"></span>
+        <span style="width:6px;height:6px;background:var(--green);border-radius:50%;"></span>
+      </div>
+      <div class="topbar-stats">
+        <span>Total: <span class="stat-val" id="statTotalInline">0</span></span>
+        <span>Verified: <span class="stat-val" style="color:var(--green)" id="statVerifiedInline">0%</span></span>
+      </div>
+      <button class="refresh-btn" id="refreshBtn" onclick="refreshData()" title="Refresh data">
+        <span class="refresh-icon">&#x21BB;</span> Refresh
+      </button>
+      <label class="auto-refresh-toggle" title="Auto-refresh every 30s">
+        <input type="checkbox" id="autoRefreshToggle"> Auto
+      </label>
+      <span class="live-dot" id="liveDot" style="display:none;" title="Live updates active"></span>
+    </div>
+  </header>
+
+  <!-- PAGE BODY -->
+  <div class="page-body">
+
+    <!-- STATS BAR -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-label">Total Proofs</div>
+        <div class="stat-value cyan" id="statTotal">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Verified On-Chain</div>
+        <div class="stat-value green" id="statVerified">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value amber" id="statPending">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Proof Time</div>
+        <div class="stat-value" id="statAvgTime">--</div>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search tx hash, address, method..." aria-label="Search proofs">
+      <div class="filter-group">
+        <label>Agent</label>
+        <select id="filterAgent" aria-label="Filter proofs by agent">
+          <option value="all">All Agents</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Status</label>
+        <select id="filterStatus" aria-label="Filter proofs by status">
+          <option value="all">All</option>
+          <option value="verified">Verified</option>
+          <option value="pending">Pending</option>
+          <option value="failed">Failed</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Action</label>
+        <select id="filterAction" aria-label="Filter proofs by action">
+          <option value="all">All</option>
+          <option value="swap_tokens">swap_tokens</option>
+          <option value="transfer">transfer</option>
+          <option value="query">query</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Sort</label>
+        <select id="sortBy" aria-label="Sort proofs">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="block-desc">Block &#x2193;</option>
+          <option value="block-asc">Block &#x2191;</option>
+          <option value="value-desc">Value &#x2193;</option>
+          <option value="value-asc">Value &#x2191;</option>
+          <option value="status">Status</option>
+        </select>
+      </div>
+      <a href="dashboard.html" id="backToDashboard" style="margin-left:auto;color:var(--cyan);font-size:0.75rem;text-decoration:none;display:none;">
+        &larr; Back to Dashboard
+      </a>
+    </div>
+
+    <!-- PROOF CARDS -->
+    <div class="proofs-list" id="proofsContainer" role="list"></div>
+
+  </div>
+</main>
+
+<script type="module" src="viem-client.js"></script>
+<script src="wallet.js"></script>
+<script src="nav.js"></script>
+<script src="shared.js"></script>
+<script src="zkverifier.js"></script>
+<script>
+// ===================== 0G TESTNET EXPLORER API =====================
+const EXPLORER_API = 'https://chainscan-dev.0g.ai/api';
+
+// Your wallet transactions on 0G Testnet
+const WALLET_ADDRESS = '0x116C...d90e'; // Shortened for display
+const TRANSACTIONS = [
+  '0x436491eaa0c9f3929e2ea33b0ab4bbb0eb30d9c8770d2af8553aadb9ca94bab9',
+  '0x0ec0ea4b29375f425669d30a497cd7dde84512dd576a73cf034bf5560a8aaaec',
+  '0x4be91d56385e3d1c8af547eaa2f98e4c7f0fc099e6973a2776b0f2db7eaf430c',
+  '0x2164cb53df0baf5e9779e868ac6958a2ec5d7f828373e86ccb0891c2d28fa701'
+];
+
+/**
+ * Fetch transaction details from 0G Testnet explorer
+ * @param {string} txHash - Transaction hash
+ * @returns {Promise<Object>} Transaction data
+ */
+async function fetchTransaction(txHash) {
+  try {
+    const response = await fetch(`${EXPLORER_API}?module=transaction&action=gettxinfo&txhash=${txHash}`);
+    const data = await response.json();
+    if (data.status === '1' && data.result) {
+      return data.result;
+    }
+    return null;
+  } catch (error) {
+    console.error('Failed to fetch transaction:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch all transactions for the wallet from 0G Testnet
+ * @returns {Promise<Array>} Array of transaction data
+ */
+async function fetchWalletTransactions() {
+  const results = [];
+  for (const txHash of TRANSACTIONS) {
+    const tx = await fetchTransaction(txHash);
+    if (tx) {
+      results.push({
+        id: txHash.slice(2, 10),
+        txHash: txHash,
+        blockNumber: tx.blockNumber || 'pending',
+        timestamp: tx.timeStamp ? new Date(parseInt(tx.timeStamp) * 1000).toISOString() : 'Unknown',
+        from: tx.from,
+        to: tx.to,
+        value: tx.value ? (parseInt(tx.value) / 1e18).toFixed(4) : '0',
+        gasUsed: tx.gasUsed,
+        gasPrice: tx.gasPrice,
+        status: tx.txreceipt_status === '1' ? 'verified' : 'pending',
+        method: tx.functionName || 'Contract Call',
+        confirmation: tx.confirmations || '0'
+      });
+    }
+  }
+  return results;
+}
+
+// ===================== DATA =====================
+let proofs = [];
+let expandedProofs = new Set();
+let autoRefreshInterval = null;
+let searchDebounceTimer = null;
+
+// ===================== HELPERS =====================
+function getAgents() {
+  try {
+    const raw = localStorage.getItem('poc_agents');
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return [];
+}
+
+function getUrlParam(key) {
+  return new URLSearchParams(window.location.search).get(key);
+}
+
+function copyToClipboard(text, btnEl) {
+  navigator.clipboard.writeText(text).then(() => {
+    btnEl.classList.add('copied');
+    btnEl.textContent = '\u2713';
+    setTimeout(() => {
+      btnEl.classList.remove('copied');
+      btnEl.textContent = '\u2398';
+    }, 1500);
+  });
+}
+
+// ===================== SKELETON LOADING =====================
+function showSkeletonLoading() {
+  const container = document.getElementById('proofsContainer');
+  const cards = Array.from({ length: 3 }, () => `
+    <div class="skeleton-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border);">
+        <div class="skeleton-line h20 w40" style="margin:0;"></div>
+        <div class="skeleton-line h20" style="margin:0;width:120px;border-radius:100px;"></div>
+      </div>
+      <div class="skeleton-grid">
+        <div><div class="skeleton-line h8 w60"></div><div class="skeleton-line w80"></div></div>
+        <div><div class="skeleton-line h8 w60"></div><div class="skeleton-line w80"></div></div>
+        <div><div class="skeleton-line h8 w60"></div><div class="skeleton-line w80"></div></div>
+        <div><div class="skeleton-line h8 w60"></div><div class="skeleton-line w80"></div></div>
+        <div><div class="skeleton-line h8 w60"></div><div class="skeleton-line w80"></div></div>
+        <div><div class="skeleton-line h8 w60"></div><div class="skeleton-line w80"></div></div>
+      </div>
+    </div>`).join('');
+  container.innerHTML = cards;
+}
+
+// ===================== SEARCH & SORT =====================
+function getSearchQuery() {
+  return (document.getElementById('searchInput').value || '').toLowerCase().trim();
+}
+
+function matchesSearch(proof, query) {
+  if (!query) return true;
+  const fields = [
+    proof.txHash, proof.id, proof.from, proof.to,
+    proof.method, proof.status, proof.action, proof.blockNumber
+  ];
+  return fields.some(f => f && String(f).toLowerCase().includes(query));
+}
+
+function sortProofs(list) {
+  const sortBy = document.getElementById('sortBy').value;
+  const sorted = [...list];
+  switch (sortBy) {
+    case 'newest':
+      sorted.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+      break;
+    case 'oldest':
+      sorted.sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
+      break;
+    case 'block-desc':
+      sorted.sort((a, b) => (parseInt(b.blockNumber) || 0) - (parseInt(a.blockNumber) || 0));
+      break;
+    case 'block-asc':
+      sorted.sort((a, b) => (parseInt(a.blockNumber) || 0) - (parseInt(b.blockNumber) || 0));
+      break;
+    case 'value-desc':
+      sorted.sort((a, b) => (parseFloat(b.value) || 0) - (parseFloat(a.value) || 0));
+      break;
+    case 'value-asc':
+      sorted.sort((a, b) => (parseFloat(a.value) || 0) - (parseFloat(b.value) || 0));
+      break;
+    case 'status':
+      const order = { verified: 0, pending: 1, failed: 2 };
+      sorted.sort((a, b) => (order[a.status] ?? 3) - (order[b.status] ?? 3));
+      break;
+  }
+  return sorted;
+}
+
+// ===================== ZK VERIFICATION =====================
+async function tryZkVerify(proof) {
+  if (!window.zkVerify || !proof.journalB64 || !proof.sealB64) return null;
+  try {
+    return await window.zkVerify(proof.journalB64, proof.sealB64, proof.imageId || '');
+  } catch (e) {
+    console.warn('ZK verify failed for', proof.id, e);
+    return false;
+  }
+}
+
+function renderZkBadge(proof) {
+  if (proof.zkVerified === true) {
+    return '<span class="zk-badge zk-verified">ZK Verified</span>';
+  } else if (proof.zkVerified === false) {
+    return '<span class="zk-badge zk-unverified">ZK Unverified</span>';
+  }
+  return '';
+}
+
+// ===================== RENDER =====================
+function renderProofs() {
+  const agentFilter = document.getElementById('filterAgent').value;
+  const statusFilter = document.getElementById('filterStatus').value;
+  const actionFilter = document.getElementById('filterAction').value;
+  const searchQuery = getSearchQuery();
+
+  let filtered = proofs.filter(p => {
+    if (agentFilter !== 'all' && p.agent !== agentFilter) return false;
+    if (statusFilter !== 'all' && p.status !== statusFilter) return false;
+    if (actionFilter !== 'all' && p.action !== actionFilter) return false;
+    if (!matchesSearch(p, searchQuery)) return false;
+    return true;
+  });
+
+  filtered = sortProofs(filtered);
+
+  const container = document.getElementById('proofsContainer');
+
+  if (filtered.length === 0) {
+    const hasFilters = agentFilter !== 'all' || statusFilter !== 'all' || actionFilter !== 'all' || searchQuery;
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">${hasFilters ? '&#x1F50D;' : '&#x2731;'}</div>
+        <p>${hasFilters ? 'No proofs match your filters.' : 'No proofs recorded yet.'}</p>
+        <p style="font-size:0.75rem;color:var(--text-dim);margin-top:8px;">
+          ${hasFilters
+            ? 'Try adjusting your search or filter criteria.'
+            : 'Connect your wallet to load on-chain transactions, or deploy an agent to start generating proofs.'}
+        </p>
+        <div class="empty-actions">
+          ${hasFilters ? '<a href="#" onclick="clearFilters();return false;">Clear Filters</a>' : ''}
+          ${!hasFilters ? '<a href="soul-vault.html">Deploy Agent</a><a href="dashboard.html">Go to Dashboard</a>' : ''}
+        </div>
+      </div>`;
+    updateStats(filtered);
+    return;
+  }
+
+  container.innerHTML = filtered.map(proof => {
+    const isExpanded = expandedProofs.has(proof.id);
+    const statusClass = proof.status;
+    const statusLabel = proof.status === 'verified' ? '\u2713 Verified On-Chain'
+                      : proof.status === 'pending' ? '\u23F3 Pending'
+                      : '\u2717 Failed';
+
+    const isContractCreation = !proof.to || proof.to === '0x';
+    const methodDisplay = isContractCreation ? 'Contract Creation' : (proof.method || 'Contract Call');
+    const valueDisplay = proof.value ? `${proof.value} OG` : '0 OG';
+    const zkBadge = renderZkBadge(proof);
+
+    const copyBtn = (text) => `<button class="copy-btn" onclick="copyToClipboard('${esc(text)}', this)" title="Copy">\u2398</button>`;
+
+    let expandableHTML = '';
+    if (proof.txHash) {
+      expandableHTML = `
+        <div class="proof-expandable${isExpanded ? ' expanded' : ''}" id="expand-${esc(proof.id)}">
+          <div class="chain-details">
+            <div class="detail-item">
+              <div class="detail-label">Transaction Hash</div>
+              <div class="hash-value">
+                <a href="https://chainscan-dev.0g.ai/tx/${esc(proof.txHash)}" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none;">${esc(proof.txHash)} &#x2197;</a>
+                ${copyBtn(proof.txHash)}
+              </div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Block Number</div>
+              <div class="detail-value">${esc(proof.blockNumber)}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">From</div>
+              <div class="detail-value">${esc(proof.from || 'Unknown')}${proof.from ? copyBtn(proof.from) : ''}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">To</div>
+              <div class="detail-value">${esc(isContractCreation ? 'Contract Creation' : (proof.to || 'Unknown'))}${proof.to && !isContractCreation ? copyBtn(proof.to) : ''}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Value</div>
+              <div class="detail-value">${esc(valueDisplay)}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Gas Used</div>
+              <div class="detail-value">${esc(proof.gasUsed || 'Unknown')}</div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    const expandBtnHTML = proof.txHash ? `
+      <button class="expand-btn${isExpanded ? ' open' : ''}" onclick="toggleExpand('${esc(proof.id)}')" aria-expanded="${isExpanded ? 'true' : 'false'}">
+        <span class="arrow">\u25BC</span> ${isExpanded ? 'Hide Details' : 'Show On-Chain Data'}
+      </button>` : '';
+
+    return `
+      <div class="proof-card" role="listitem" data-proof-id="${esc(proof.id)}" data-agent="${esc(proof.agent || 'unknown')}" data-status="${esc(proof.status)}" data-action="${esc(proof.action || 'unknown')}">
+        <div class="proof-header">
+          <div class="proof-id">${isContractCreation ? 'Contract Deployment' : 'Transaction'} #${esc(proof.id)}</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            ${zkBadge}
+            <div class="proof-status ${esc(statusClass)}">${statusLabel}</div>
+          </div>
+        </div>
+        <div class="proof-details-grid">
+          <div class="detail-item">
+            <div class="detail-label">Method</div>
+            <div class="detail-value">${esc(methodDisplay)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Value</div>
+            <div class="detail-value">${esc(valueDisplay)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Block</div>
+            <div class="detail-value">${esc(proof.blockNumber || 'Pending')}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Confirmations</div>
+            <div class="detail-value">${esc(proof.confirmation || '0')}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Timestamp</div>
+            <div class="detail-value">${esc(proof.timestamp || 'Unknown')}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Network</div>
+            <div class="detail-value" style="color:var(--cyan);">0G Testnet</div>
+          </div>
+        </div>
+        ${expandBtnHTML}
+        ${expandableHTML}
+      </div>`;
+  }).join('');
+
+  updateStats(filtered);
+}
+
+function updateStats(filtered) {
+  const total = filtered.length;
+  const verified = filtered.filter(p => p.status === 'verified').length;
+  const pending = filtered.filter(p => p.status === 'pending').length;
+  const verifiedWithTime = filtered.filter(p => p.status === 'verified' && p.proofTimeNum);
+  const avgTime = verifiedWithTime.length > 0
+    ? Math.round(verifiedWithTime.reduce((s, p) => s + p.proofTimeNum, 0) / verifiedWithTime.length)
+    : '--';
+  const pct = total > 0 ? Math.round((verified / total) * 100) : 0;
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statVerified').textContent = verified;
+  document.getElementById('statPending').textContent = pending;
+  document.getElementById('statAvgTime').textContent = avgTime !== '--' ? avgTime + 's' : '--';
+  document.getElementById('statTotalInline').textContent = total;
+  document.getElementById('statVerifiedInline').textContent = pct + '%';
+}
+
+function toggleExpand(proofId) {
+  const el = document.getElementById('expand-' + proofId);
+  const btn = el.previousElementSibling;
+  if (expandedProofs.has(proofId)) {
+    expandedProofs.delete(proofId);
+    el.classList.remove('expanded');
+    btn.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.innerHTML = '<span class="arrow">\u25BC</span> Show On-Chain Data';
+  } else {
+    expandedProofs.add(proofId);
+    el.classList.add('expanded');
+    btn.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+    btn.innerHTML = '<span class="arrow">\u25BC</span> Hide Details';
+  }
+}
+
+function clearFilters() {
+  document.getElementById('filterAgent').value = 'all';
+  document.getElementById('agentFilter').value = '';
+  document.getElementById('filterStatus').value = 'all';
+  document.getElementById('filterAction').value = 'all';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('sortBy').value = 'newest';
+  renderProofs();
+}
+
+// ===================== POPULATE FILTERS =====================
+function populateAgentFilters() {
+  const agents = getAgents();
+  const agentNames = new Set(proofs.map(p => p.agent));
+  agents.forEach(a => {
+    const name = a.name || a.id;
+    if (name) agentNames.add(name);
+  });
+
+  const selects = [document.getElementById('filterAgent'), document.getElementById('agentFilter')];
+  selects.forEach(sel => {
+    if (!sel) return;
+    const current = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
+    agentNames.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    });
+    sel.value = current;
+  });
+}
+
+// ===================== URL PARAM =====================
+function applyUrlParams() {
+  const agentParam = getUrlParam('agent');
+  if (agentParam) {
+    ['filterAgent', 'agentFilter'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === agentParam) {
+          sel.value = agentParam;
+          break;
+        }
+      }
+    });
+    const backLink = document.getElementById('backToDashboard');
+    backLink.style.display = 'inline';
+    backLink.href = 'dashboard.html?agent=' + encodeURIComponent(agentParam);
+  }
+}
+
+// ===================== EVENTS =====================
+document.getElementById('filterAgent').addEventListener('change', function() {
+  const topSel = document.getElementById('agentFilter');
+  if (topSel) topSel.value = this.value;
+  renderProofs();
+});
+document.getElementById('agentFilter').addEventListener('change', function() {
+  document.getElementById('filterAgent').value = this.value;
+  renderProofs();
+});
+document.getElementById('filterStatus').addEventListener('change', renderProofs);
+document.getElementById('filterAction').addEventListener('change', renderProofs);
+document.getElementById('sortBy').addEventListener('change', renderProofs);
+document.getElementById('searchInput').addEventListener('input', function() {
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(renderProofs, 200);
+});
+
+// ===================== REFRESH & AUTO-REFRESH =====================
+async function refreshData() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+  btn.disabled = true;
+  await loadOnChainData();
+  btn.classList.remove('spinning');
+  btn.disabled = false;
+}
+
+document.getElementById('autoRefreshToggle').addEventListener('change', function() {
+  if (this.checked) {
+    autoRefreshInterval = setInterval(refreshData, 30000);
+  } else {
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
+  }
+});
+
+// ===================== WEBSOCKET LIVE UPDATES =====================
+function initWebSocket() {
+  if (typeof PocApi === 'undefined' || !PocApi.onWsEvent) return;
+  PocApi.onWsEvent('proofs', function(data) {
+    if (!data) return;
+    // Merge incoming proof into the list
+    const existing = proofs.findIndex(p => p.id === data.proof_id);
+    if (existing >= 0) {
+      proofs[existing] = { ...proofs[existing], ...data, id: data.proof_id };
+    } else {
+      proofs.unshift({
+        id: data.proof_id,
+        status: data.status || 'pending',
+        timestamp: data.timestamp || new Date().toISOString(),
+        agent: data.agent_id || 'unknown',
+        action: data.action || 'unknown',
+        ...data
+      });
+    }
+    renderProofs();
+    // Flash the live dot
+    const dot = document.getElementById('liveDot');
+    dot.style.display = 'inline-block';
+    clearTimeout(dot._hideTimer);
+    dot._hideTimer = setTimeout(() => { dot.style.display = 'none'; }, 5000);
+  });
+}
+
+// ===================== LOAD ON-CHAIN DATA =====================
+async function loadOnChainData() {
+  const container = document.getElementById('proofsContainer');
+  if (proofs.length === 0) {
+    showSkeletonLoading();
+  }
+
+  try {
+    const txs = await fetchWalletTransactions();
+    if (txs.length > 0) {
+      proofs = txs.map(tx => ({
+        ...tx,
+        agent: 'deployed-agent',
+        action: tx.method || 'contract_call'
+      }));
+      // Attempt ZK verification on each proof
+      for (const proof of proofs) {
+        const result = await tryZkVerify(proof);
+        if (result !== null) proof.zkVerified = result;
+      }
+      populateAgentFilters();
+      renderProofs();
+    } else {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">&#x26A0;</div>
+          <p>No transactions found on 0G Testnet</p>
+          <p style="font-size:0.75rem;color:var(--text-dim);margin-top:8px;">Connect your wallet or check that the explorer API is reachable.</p>
+          <div class="empty-actions">
+            <a href="#" onclick="refreshData();return false;">Retry</a>
+            <a href="soul-vault.html">Deploy Agent</a>
+          </div>
+        </div>`;
+      updateStats([]);
+    }
+  } catch (error) {
+    console.error('Failed to load on-chain data:', error);
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">&#x2717;</div>
+        <p>Failed to load on-chain data</p>
+        <p style="font-size:0.75rem;color:var(--text-dim);margin-top:8px;">${esc(error.message)}</p>
+        <div class="empty-actions">
+          <a href="#" onclick="refreshData();return false;">Retry</a>
+        </div>
+      </div>`;
+    updateStats([]);
+  }
+}
+
+// ===================== INIT =====================
+populateAgentFilters();
+applyUrlParams();
+loadOnChainData();
+initWebSocket();
+</script>
+<script src="poc-api.js"></script>
+</body>
+</html>

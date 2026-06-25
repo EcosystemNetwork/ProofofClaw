@@ -1,0 +1,165 @@
+# ProofOfClaw — Full Stack Docker Compose
+# Usage: docker compose up
+# All services start with sensible defaults. Copy .env.example to .env to customize.
+
+services:
+  # ─── Frontend (nginx) ─────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: poc-frontend
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      dm3-delivery:
+        condition: service_healthy
+      oneclaw-api:
+        condition: service_healthy
+      agent-runtime:
+        condition: service_healthy
+      swarm-bridge:
+        condition: service_healthy
+    networks:
+      - poc-net
+    restart: unless-stopped
+
+  # ─── DM3 Delivery Service ─────────────────────────────────────────────
+  dm3-delivery:
+    build:
+      context: ./delivery-service
+      dockerfile: ../Dockerfile.node
+    container_name: poc-dm3-delivery
+    ports:
+      - "${DM3_PORT:-3001}:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3001/health"]
+      interval: 15s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    networks:
+      - poc-net
+    restart: unless-stopped
+
+  # ─── 1clawAI API Server ───────────────────────────────────────────────
+  oneclaw-api:
+    build:
+      context: ./1claw-server
+      dockerfile: ../Dockerfile.node
+    container_name: poc-oneclaw-api
+    ports:
+      - "${ONECLAW_PORT:-3456}:3456"
+    environment:
+      - ONECLAW_PORT=3456
+      - NODE_ENV=production
+      # Optional — set in .env for Neon DB persistence
+      - DATABASE_URL=${DATABASE_URL:-}
+      # Optional — set in .env for Stripe payments
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      # API auth keys
+      - ONECLAW_API_KEY=${ONECLAW_API_KEY:-poc-dev-key}
+      - USER_AUTH_KEY=${USER_AUTH_KEY:-}
+      - OPERATOR_AUTH_KEY=${OPERATOR_AUTH_KEY:-}
+    volumes:
+      - oneclaw-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3456/health"]
+      interval: 15s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    networks:
+      - poc-net
+    restart: unless-stopped
+
+  # ─── Agent Runtime (dm3Daemon) ─────────────────────────────────────────
+  agent-runtime:
+    build:
+      context: ./dm3Daemon
+      dockerfile: ../Dockerfile.node
+    container_name: poc-agent-runtime
+    ports:
+      - "${API_PORT:-8420}:8420"
+    environment:
+      - API_PORT=8420
+      - NODE_ENV=production
+      # Required agent config — override in .env
+      - AGENT_ID=${AGENT_ID:-alice-agent}
+      - ENS_NAME=${ENS_NAME:-alice.proofofclaw.eth}
+      - PRIVATE_KEY=${PRIVATE_KEY:-0xe770f73a119b637161fe37282ea41cffb9219eb586b29d2818ad3437f78a1860}
+      - RPC_URL=${RPC_URL:-https://eth-sepolia.g.alchemy.com/v2/demo}
+      - NETWORK=${NETWORK:-sepolia}
+      # Point to the delivery service inside the Docker network
+      - DM3_DELIVERY_SERVICE_URL=http://dm3-delivery:3001
+      # Policy
+      - ALLOWED_TOOLS=${ALLOWED_TOOLS:-swap_tokens,transfer,query}
+      - ENDPOINT_ALLOWLIST=${ENDPOINT_ALLOWLIST:-https://api.uniswap.org,https://api.0x.org}
+      - MAX_VALUE_AUTONOMOUS_WEI=${MAX_VALUE_AUTONOMOUS_WEI:-1000000000000000000}
+    volumes:
+      - agent-uploads:/app/uploads
+    depends_on:
+      dm3-delivery:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8420/health"]
+      interval: 15s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    networks:
+      - poc-net
+    restart: unless-stopped
+
+  # ─── Swarm Bridge ─────────────────────────────────────────────────────
+  swarm-bridge:
+    build:
+      context: ./swarm-bridge
+      dockerfile: ../Dockerfile.node
+    container_name: poc-swarm-bridge
+    ports:
+      - "${BRIDGE_PORT:-3002}:3002"
+    environment:
+      - BRIDGE_PORT=3002
+      - NODE_ENV=production
+      # Point to the delivery service inside the Docker network
+      - DM3_DELIVERY_URL=http://dm3-delivery:3001
+      # Swarm hub configuration
+      - SWARM_HUB_URL=${SWARM_HUB_URL:-https://swarmprotocol.fun}
+      - SWARM_ORG_ID=${SWARM_ORG_ID:-}
+      - SWARM_AGENT_NAME=${SWARM_AGENT_NAME:-ProofOfClaw Bridge}
+      - SWARM_AGENT_TYPE=${SWARM_AGENT_TYPE:-Coordinator}
+      - BRIDGE_DEFAULT_CHANNEL=${BRIDGE_DEFAULT_CHANNEL:-}
+    command: ["node", "bridge.mjs"]
+    volumes:
+      - swarm-keys:/app/keys
+    depends_on:
+      dm3-delivery:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3002/health"]
+      interval: 15s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    networks:
+      - poc-net
+    restart: unless-stopped
+
+# ─── Volumes ──────────────────────────────────────────────────────────────
+volumes:
+  oneclaw-data:
+    driver: local
+  agent-uploads:
+    driver: local
+  swarm-keys:
+    driver: local
+
+# ─── Network ──────────────────────────────────────────────────────────────
+networks:
+  poc-net:
+    driver: bridge

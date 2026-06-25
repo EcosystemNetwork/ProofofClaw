@@ -1,0 +1,518 @@
+{
+  "$schema": "https://erc7730.org/schema.json",
+  "context": {
+    "eip155": {
+      "deployments": [
+        {
+          "chainId": 16602,
+          "address": "0xa2Df3F3998FdF9Fb7E11e43d10d6B3C62264e3A4"
+        },
+        {
+          "chainId": 16605,
+          "address": "0x0000000000000000000000000000000000000000"
+        },
+        {
+          "chainId": 11155111,
+          "address": "0x0000000000000000000000000000000000000000"
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "owner": "Proof of Claw",
+    "info": {
+      "url": "https://proofofclaw.eth",
+      "legalName": "Proof of Claw",
+      "description": "Provable AI agent execution with ZK proofs, hardware approval, and encrypted messaging"
+    },
+    "erc7730Version": "1.0.0"
+  },
+  "display": {
+    "formats": {
+      "approveAction(bytes32,bytes32,bytes)": {
+        "intent": "Approve agent action",
+        "fields": [
+          {
+            "path": "agentId",
+            "label": "Agent",
+            "format": "raw"
+          },
+          {
+            "path": "outputCommitment",
+            "label": "Action hash",
+            "format": "raw"
+          }
+        ]
+      },
+      "registerAgent(bytes32,bytes32,uint256,address)": {
+        "intent": "Register agent policy",
+        "fields": [
+          {
+            "path": "agentId",
+            "label": "Agent ID",
+            "format": "raw"
+          },
+          {
+            "path": "policyHash",
+            "label": "Policy fingerprint",
+            "format": "raw"
+          },
+          {
+            "path": "maxValueAutonomous",
+            "label": "Auto-approve up to",
+            "format": "amount",
+            "params": {
+              "tokenPath": null
+            }
+          },
+          {
+            "path": "agentWallet",
+            "label": "Agent wallet",
+            "format": "addressName"
+          }
+        ]
+      },
+      "updateAgentPolicy(bytes32,bytes32,uint256)": {
+        "intent": "Update agent policy",
+        "fields": [
+          {
+            "path": "agentId",
+            "label": "Agent ID",
+            "format": "raw"
+          },
+          {
+            "path": "newPolicyHash",
+            "label": "New policy hash",
+            "format": "raw"
+          },
+          {
+            "path": "newMaxValueAutonomous",
+            "label": "New auto-approve limit",
+            "format": "amount",
+            "params": {
+              "tokenPath": null
+            }
+          }
+        ]
+      },
+      "registerAgentIdentity(bytes32,string,bytes32,bytes32)": {
+        "intent": "Register agent in EIP-8004",
+        "fields": [
+          {
+            "path": "agentId",
+            "label": "Agent ID",
+            "format": "raw"
+          },
+          {
+            "path": "agentURI",
+            "label": "Registration file",
+            "format": "raw"
+          },
+          {
+            "path": "policyHash",
+            "label": "Policy fingerprint",
+            "format": "raw"
+          },
+          {
+            "path": "riscZeroImageId",
+            "label": "ZK Image ID",
+            "format": "raw"
+          }
+        ]
+      },
+      "submitReputation(bytes32,int128,uint8,string,string,string,string,bytes32)": {
+        "intent": "Submit agent reputation feedback",
+        "fields": [
+          {
+            "path": "agentId",
+            "label": "Agent",
+            "format": "raw"
+          },
+          {
+            "path": "value",
+            "label": "Score",
+            "format": "raw"
+          },
+          {
+            "path": "tag1",
+            "label": "Category",
+            "format": "raw"
+          }
+        ]
+      },
+      "mint(bytes32,bytes32,bytes32,string,bytes32,string)": {
+        "intent": "Mint agent iNFT (ERC-7857)",
+        "fields": [
+          {
+            "path": "agentId",
+            "label": "Agent ID",
+            "format": "raw"
+          },
+          {
+            "path": "policyHash",
+            "label": "Policy fingerprint",
+            "format": "raw"
+          },
+          {
+            "path": "riscZeroImageId",
+            "label": "ZK Image ID",
+            "format": "raw"
+          },
+          {
+            "path": "ensName",
+            "label": "ENS Name",
+            "format": "raw"
+          }
+        ]
+      },
+      "authorizeUsage(uint256,address,bytes)": {
+        "intent": "Authorize agent usage",
+        "fields": [
+          {
+            "path": "tokenId",
+            "label": "iNFT Token ID",
+            "format": "raw"
+          },
+          {
+            "path": "executor",
+            "label": "Authorized executor",
+            "format": "addressName"
+          }
+        ]
+      },
+      "mintTo(address,bytes32,bytes32,bytes32,string,bytes32,bytes32,string,string)": {
+        "intent": "Mint agent iNFT to wallet",
+        "fields": [
+          {
+            "path": "to",
+            "label": "Recipient wallet",
+            "format": "addressName"
+          },
+          {
+            "path": "agentId",
+            "label": "Agent ID",
+            "format": "raw"
+          },
+          {
+            "path": "policyHash",
+            "label": "Policy fingerprint",
+            "format": "raw"
+          },
+          {
+            "path": "ensName",
+            "label": "ENS Name",
+            "format": "raw"
+          }
+        ]
+      },
+      "updateSoulBackup(uint256,bytes32,string)": {
+        "intent": "Update agent soul backup",
+        "fields": [
+          {
+            "path": "tokenId",
+            "label": "iNFT Token ID",
+            "format": "raw"
+          },
+          {
+            "path": "newSoulBackupHash",
+            "label": "New soul hash",
+            "format": "raw"
+          },
+          {
+            "path": "newSoulBackupURI",
+            "label": "Backup storage URI",
+            "format": "raw"
+          }
+        ]
+      },
+      "updateMetadata(uint256,string,bytes32)": {
+        "intent": "Update agent metadata",
+        "fields": [
+          {
+            "path": "tokenId",
+            "label": "iNFT Token ID",
+            "format": "raw"
+          },
+          {
+            "path": "newMetadataHash",
+            "label": "New metadata hash",
+            "format": "raw"
+          }
+        ]
+      },
+      "revokeUsage(uint256,address)": {
+        "intent": "Revoke agent usage rights",
+        "fields": [
+          {
+            "path": "tokenId",
+            "label": "iNFT Token ID",
+            "format": "raw"
+          },
+          {
+            "path": "executor",
+            "label": "Revoked executor",
+            "format": "addressName"
+          }
+        ]
+      },
+      "updatePolicy(uint256,bytes32)": {
+        "intent": "Update agent policy",
+        "fields": [
+          {
+            "path": "tokenId",
+            "label": "iNFT Token ID",
+            "format": "raw"
+          },
+          {
+            "path": "newPolicyHash",
+            "label": "New policy hash",
+            "format": "raw"
+          }
+        ]
+      },
+      "deactivate(uint256)": {
+        "intent": "Deactivate agent iNFT",
+        "fields": [
+          {
+            "path": "tokenId",
+            "label": "iNFT Token ID",
+            "format": "raw"
+          }
+        ]
+      },
+      "transferFrom(address,address,uint256)": {
+        "intent": "Transfer agent iNFT",
+        "fields": [
+          {
+            "path": "from",
+            "label": "From",
+            "format": "addressName"
+          },
+          {
+            "path": "to",
+            "label": "To",
+            "format": "addressName"
+          },
+          {
+            "path": "tokenId",
+            "label": "iNFT Token ID",
+            "format": "raw"
+          }
+        ]
+      },
+      "safeTransferFrom(address,address,uint256)": {
+        "intent": "Safe transfer agent iNFT",
+        "fields": [
+          {
+            "path": "from",
+            "label": "From",
+            "format": "addressName"
+          },
+          {
+            "path": "to",
+            "label": "To",
+            "format": "addressName"
+          },
+          {
+            "path": "tokenId",
+            "label": "iNFT Token ID",
+            "format": "raw"
+          }
+        ]
+      },
+      "safeTransferFrom(address,address,uint256,bytes)": {
+        "intent": "Safe transfer agent iNFT (with data)",
+        "fields": [
+          {
+            "path": "from",
+            "label": "From",
+            "format": "addressName"
+          },
+          {
+            "path": "to",
+            "label": "To",
+            "format": "addressName"
+          },
+          {
+            "path": "tokenId",
+            "label": "iNFT Token ID",
+            "format": "raw"
+          }
+        ]
+      },
+      "approve(address,uint256)": {
+        "intent": "Approve iNFT transfer",
+        "fields": [
+          {
+            "path": "to",
+            "label": "Approved address",
+            "format": "addressName"
+          },
+          {
+            "path": "tokenId",
+            "label": "iNFT Token ID",
+            "format": "raw"
+          }
+        ]
+      },
+      "setApprovalForAll(address,bool)": {
+        "intent": "Set operator approval",
+        "fields": [
+          {
+            "path": "operator",
+            "label": "Operator",
+            "format": "addressName"
+          },
+          {
+            "path": "approved",
+            "label": "Approved",
+            "format": "raw"
+          }
+        ]
+      },
+      "recordProof(uint256)": {
+        "intent": "Record verified proof",
+        "fields": [
+          {
+            "path": "tokenId",
+            "label": "iNFT Token ID",
+            "format": "raw"
+          }
+        ]
+      },
+      "updateReputation(uint256,uint256)": {
+        "intent": "Update agent reputation",
+        "fields": [
+          {
+            "path": "tokenId",
+            "label": "iNFT Token ID",
+            "format": "raw"
+          },
+          {
+            "path": "newScore",
+            "label": "Reputation score",
+            "format": "raw"
+          }
+        ]
+      },
+      "setVerifier(address)": {
+        "intent": "Set verifier contract",
+        "fields": [
+          {
+            "path": "_verifier",
+            "label": "New verifier",
+            "format": "addressName"
+          }
+        ]
+      },
+      "verifyAndExecute(bytes,bytes,bytes)": {
+        "intent": "Verify ZK proof and execute",
+        "fields": [
+          {
+            "path": "seal",
+            "label": "Proof seal",
+            "format": "raw"
+          },
+          {
+            "path": "journalData",
+            "label": "Journal data",
+            "format": "raw"
+          }
+        ]
+      },
+      "deactivateAgent(bytes32)": {
+        "intent": "Deactivate agent policy",
+        "fields": [
+          {
+            "path": "agentId",
+            "label": "Agent ID",
+            "format": "raw"
+          }
+        ]
+      },
+      "setEIP8004Integration(address)": {
+        "intent": "Set EIP-8004 integration",
+        "fields": [
+          {
+            "path": "_eip8004",
+            "label": "Integration contract",
+            "format": "addressName"
+          }
+        ]
+      },
+      "setAllowedTarget(address,bool)": {
+        "intent": "Update execution allowlist",
+        "fields": [
+          {
+            "path": "target",
+            "label": "Target contract",
+            "format": "addressName"
+          },
+          {
+            "path": "allowed",
+            "label": "Allowed",
+            "format": "raw"
+          }
+        ]
+      },
+      "updateVerifier(address)": {
+        "intent": "Update RISC Zero verifier",
+        "fields": [
+          {
+            "path": "newVerifier",
+            "label": "New verifier",
+            "format": "addressName"
+          }
+        ]
+      },
+      "updateImageId(bytes32)": {
+        "intent": "Update RISC Zero image ID",
+        "fields": [
+          {
+            "path": "newImageId",
+            "label": "New image ID",
+            "format": "raw"
+          }
+        ]
+      },
+      "requestValidation(bytes32,string,bytes32)": {
+        "intent": "Request agent validation",
+        "fields": [
+          {
+            "path": "agentId",
+            "label": "Agent ID",
+            "format": "raw"
+          },
+          {
+            "path": "traceStorageURI",
+            "label": "Trace URI",
+            "format": "raw"
+          },
+          {
+            "path": "requestHash",
+            "label": "Request hash",
+            "format": "raw"
+          }
+        ]
+      },
+      "withdraw(address,uint256)": {
+        "intent": "Withdraw contract funds",
+        "fields": [
+          {
+            "path": "to",
+            "label": "Recipient",
+            "format": "addressName"
+          },
+          {
+            "path": "amount",
+            "label": "Amount",
+            "format": "amount",
+            "params": {
+              "tokenPath": null
+            }
+          }
+        ]
+      }
+    }
+  }
+}

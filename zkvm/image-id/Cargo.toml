@@ -1,0 +1,11 @@
+[package]
+name = "image-id"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+risc0-binfmt = "1.2"
+risc0-zkp = "1.2"
+hex = "0.4"
+elf = "0.7"
+sha2 = "0.10"

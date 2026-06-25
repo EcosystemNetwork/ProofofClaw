@@ -1,0 +1,2426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), bluetooth=(), hid=(), usb=(), serial=(), speech-synthesis=(), speech-recognition=()">
+<meta name="description" content="Real-time agent dashboard for monitoring Proof of Claw agents.">
+<title>Agent Dashboard — Proof of Claw</title>
+<link rel="icon" type="image/x-icon" href="public/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="public/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="public/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="public/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+/* ======================================== */
+/* TOPBAR (page-specific: fixed with left)  */
+/* ======================================== */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-w);
+  right: 0;
+  height: var(--topbar-h);
+  background: rgba(6, 8, 13, 0.88);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.75rem;
+  z-index: 150;
+  transition: left 0.25s ease;
+}
+
+body.sidebar-collapsed .topbar { left: var(--sidebar-w-collapsed); }
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.topbar-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.ethglobal-badge {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--border-cyan);
+  border-radius: 100px;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--cyan);
+  background: var(--cyan-glow);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ======================================== */
+/* MAIN CONTENT                             */
+/* ======================================== */
+.main-content {
+  position: relative;
+  z-index: 1;
+  margin-left: var(--sidebar-w);
+  margin-top: var(--topbar-h);
+  padding: 1.75rem;
+  min-height: calc(100vh - var(--topbar-h));
+  transition: margin-left 0.25s ease;
+}
+
+body.sidebar-collapsed .main-content { margin-left: var(--sidebar-w-collapsed); }
+
+/* ======================================== */
+/* AGENT HEADER                             */
+/* ======================================== */
+.agent-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.agent-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.agent-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  background: var(--cyan-glow);
+  border: 1px solid var(--border-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.agent-header-info h2 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.15rem;
+}
+
+.agent-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.agent-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+
+.uptime-display {
+  font-size: 0.85rem;
+  color: var(--green);
+  font-weight: 600;
+}
+
+.uptime-display span { color: var(--text-dim); font-weight: 400; }
+
+.policy-hash-display {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.policy-hash-display .hash { color: var(--cyan); }
+
+/* ======================================== */
+/* METRICS GRID                             */
+/* ======================================== */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+@media (max-width: 1100px) {
+  .metrics-grid { grid-template-columns: 1fr; }
+}
+
+.metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.metric:last-child { border-bottom: none; }
+
+.metric-label {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.metric-value {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.metric-value.success { color: var(--green); }
+.metric-value.warning { color: var(--amber); }
+.metric-value.error { color: var(--red); }
+.metric-value.hash { color: var(--cyan); font-size: 0.75rem; }
+
+/* ======================================== */
+/* PENDING APPROVALS                        */
+/* ======================================== */
+.pending-section {
+  background: linear-gradient(135deg, rgba(255, 179, 0, 0.04), rgba(255, 61, 90, 0.04));
+  border: 1px solid rgba(255, 179, 0, 0.3);
+  padding: 1.25rem;
+  border-radius: 8px;
+  margin-bottom: 1.75rem;
+}
+
+.pending-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.pending-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--amber);
+}
+
+.pending-count {
+  background: var(--amber);
+  color: var(--bg-primary);
+  padding: 0.15rem 0.6rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.approval-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.approval-desc {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.approval-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.approval-details {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.8;
+}
+
+.approval-details .hash { color: var(--cyan); word-break: break-all; }
+
+.approval-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ======================================== */
+/* LEDGER CARD (security upgrade widget)    */
+/* ======================================== */
+.dash-ledger-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.75rem;
+  margin-bottom: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  transition: border-color 0.3s, background 0.3s;
+}
+.dash-ledger-card.connected {
+  border-color: rgba(0,230,118,0.3);
+  background: linear-gradient(135deg, rgba(0,230,118,0.04), var(--bg-card));
+}
+.dash-ledger-info {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex: 1;
+}
+.dash-ledger-icon {
+  width: 52px; height: 52px; border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; flex-shrink: 0;
+  transition: border-color 0.3s, background 0.3s;
+}
+.dash-ledger-card.connected .dash-ledger-icon {
+  border-color: rgba(0,230,118,0.3);
+  background: var(--green-glow, rgba(0,230,118,0.08));
+}
+.dash-ledger-details h3 {
+  font-family: var(--font-display);
+  font-size: 1rem; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 0.25rem;
+}
+.dash-ledger-details p {
+  font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5;
+}
+.dash-ledger-meta {
+  display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 0.5rem;
+}
+.dash-ledger-meta-item {
+  font-size: 0.75rem; color: var(--text-dim);
+}
+.dash-ledger-meta-item span { color: var(--text-primary); font-weight: 500; }
+/* Status bar when connected + no pending */
+.dash-ledger-status-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0.7rem 1.25rem;
+  border-radius: 8px;
+  background: rgba(0,230,118,0.06);
+  border: 1px solid rgba(0,230,118,0.2);
+  margin-bottom: 1.75rem;
+  font-size: 0.8rem; color: var(--text-secondary);
+}
+.dash-ledger-status-bar .dot-green {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green, #00e676); flex-shrink: 0;
+  box-shadow: 0 0 6px var(--green, #00e676);
+}
+
+/* ======================================== */
+/* ACTIVITY FEED                            */
+/* ======================================== */
+.activity-section { margin-bottom: 1.75rem; }
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.75rem;
+}
+
+.activity-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activity-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.activity-item:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-cyan);
+}
+
+.activity-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.activity-icon.proof { background: var(--cyan-glow); color: var(--cyan); }
+.activity-icon.message { background: var(--amber-glow); color: var(--amber); }
+.activity-icon.approval { background: var(--green-glow); color: var(--green); }
+
+.activity-content { flex: 1; min-width: 0; }
+
+.activity-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 0.1rem;
+}
+
+.activity-meta {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* ======================================== */
+/* BUTTONS (page-specific)                  */
+/* ======================================== */
+.btn-danger {
+  background: rgba(255, 61, 90, 0.1);
+  color: var(--red);
+  border: 1px solid rgba(255, 61, 90, 0.2);
+}
+
+.btn-danger:hover {
+  background: rgba(255, 61, 90, 0.2);
+}
+
+.btn-amber {
+  background: var(--amber);
+  color: var(--bg-primary);
+}
+
+.btn-amber:hover {
+  background: #c68a00;
+}
+
+/* ======================================== */
+/* QUICK ACTIONS                            */
+/* ======================================== */
+.quick-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ======================================== */
+/* EMPTY STATE                              */
+/* ======================================== */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-dim);
+}
+
+.empty-state .icon { font-size: 2rem; margin-bottom: 0.75rem; }
+.empty-state p { font-size: 0.85rem; }
+
+/* ======================================== */
+/* ANIMATIONS                               */
+/* ======================================== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+
+/* ======================================== */
+/* RESPONSIVE                               */
+/* ======================================== */
+@media (max-width: 768px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar { transform: translateX(-100%); z-index: 300; }
+  .sidebar.mobile-open { transform: translateX(0); }
+  .mobile-menu-btn { display: flex; }
+  .topbar { left: 0; padding: 0 1rem; }
+  .main-content { margin-left: 0; padding: 1.25rem 1rem; }
+  .metrics-grid { grid-template-columns: 1fr; }
+  .agent-header { flex-direction: column; }
+  .agent-header-right { align-items: flex-start; }
+  .topbar-right { flex-wrap: wrap; gap: 0.5rem; }
+  .status-badge { font-size: 0.6rem; padding: 0.2rem 0.5rem; }
+  .ethglobal-badge { display: none; }
+}
+
+@media (max-width: 480px) {
+  .topbar { height: 52px; }
+  .main-content { margin-top: 52px; padding: 1rem 0.75rem; }
+  .topbar-title { font-size: 0.9rem; }
+  .agent-selector { font-size: 0.7rem; padding: 0.3rem 0.5rem; min-width: 140px; max-width: 180px; }
+  .status-badge { display: none; }
+}
+
+/* ======================================== */
+/* LIVE BADGE                               */
+/* ======================================== */
+.live-badge {
+  background: rgba(0, 230, 118, 0.08);
+  border-color: rgba(0, 230, 118, 0.3) !important;
+  color: var(--green);
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  gap: 0.4rem;
+}
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse-live 1.5s ease-in-out infinite;
+}
+.live-text {
+  color: var(--green);
+}
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--green); }
+  50% { opacity: 0.5; box-shadow: 0 0 3px var(--green); }
+}
+
+/* ======================================== */
+/* MY iNFTs GALLERY                        */
+/* ======================================== */
+.infts-section {
+  margin-bottom: 1.75rem;
+}
+
+.infts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.infts-header .section-title { margin-bottom: 0; }
+
+.infts-count {
+  background: var(--cyan-glow);
+  color: var(--cyan);
+  padding: 0.15rem 0.6rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.infts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.inft-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.inft-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.inft-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-cyan);
+  transform: translateY(-1px);
+}
+
+.inft-card:hover::before { opacity: 1; }
+
+.inft-card-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.inft-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--cyan-glow);
+  border: 1px solid var(--border-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  color: var(--cyan);
+}
+
+.inft-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.inft-card-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inft-card-ens {
+  font-size: 0.72rem;
+  color: var(--cyan);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inft-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.inft-status-dot.active { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.inft-status-dot.inactive { background: var(--text-dim); }
+
+.inft-card-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 0.75rem;
+  font-size: 0.72rem;
+}
+
+.inft-detail-label {
+  color: var(--text-dim);
+}
+
+.inft-detail-value {
+  color: var(--text-secondary);
+  text-align: right;
+  font-weight: 500;
+}
+
+.inft-detail-value.hash { color: var(--cyan); font-size: 0.68rem; }
+
+.infts-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.infts-loading .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.infts-empty {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+
+.infts-error {
+  padding: 1rem;
+  background: rgba(255, 61, 90, 0.06);
+  border: 1px solid rgba(255, 61, 90, 0.2);
+  border-radius: 6px;
+  color: var(--red);
+  font-size: 0.8rem;
+}
+
+.infts-refresh-btn {
+  background: transparent;
+  border: 1px solid var(--border-cyan);
+  color: var(--cyan);
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.infts-refresh-btn:hover {
+  background: var(--cyan-glow);
+}
+
+/* Connection error banner */
+.live-error-banner {
+  background: rgba(255, 61, 90, 0.08);
+  border: 1px solid rgba(255, 61, 90, 0.3);
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  color: var(--red);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.live-error-banner .error-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--red); flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to dashboard</a>
+
+<div class="grid-bg"></div>
+
+<!-- ======================================== -->
+<!-- SIDEBAR                                  -->
+<!-- ======================================== -->
+<aside class="sidebar" role="complementary" aria-label="App sidebar">
+  <button class="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar">&#x276E;</button>
+  <a href="index.html" class="sidebar-logo">
+    <img src="public/logoproofofclaw.png" alt="Proof of Claw" class="claw-icon">
+    <span class="logo-text">Proof of Claw</span>
+  </a>
+
+  <nav class="sidebar-nav" aria-label="App navigation">
+    <a href="agents.html">
+      <span class="nav-icon">&#x2726;</span> Agents
+    </a>
+    <a href="dashboard.html" class="active">
+      <span class="nav-icon">&#x25A3;</span> Dashboard
+    </a>
+    <a href="auth-modules.html">
+      <span class="nav-icon">&#x1F512;</span> Auth Modules
+    </a>
+    <a href="messages.html">
+      <span class="nav-icon">&#x2709;</span> Messages
+    </a>
+    <a href="proofs.html">
+      <span class="nav-icon">&#x2731;</span> Proofs
+    </a>
+    <a href="kanban.html">
+      <span class="nav-icon">&#x25A0;</span> Kanban
+    </a>
+    <a href="soul-vault.html">
+      <span class="nav-icon">&#x2B23;</span> Soul Vault
+    </a>
+    <a href="approve.html">
+      <span class="nav-icon">&#x2714;</span> Approve
+    </a>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <div id="poc-connection-slot"></div>
+  </div>
+</aside>
+
+<!-- ======================================== -->
+<!-- TOPBAR                                   -->
+<!-- ======================================== -->
+<div class="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
+<header class="topbar" role="banner">
+  <div class="topbar-left">
+    <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Open menu">&#9776;</button>
+    <span class="topbar-title">Agent Dashboard</span>
+    <div class="agent-search-wrap">
+      <input type="text" id="agent-selector" class="agent-selector" placeholder="Search ENS or agent name..." aria-label="Search agent by ENS name" autocomplete="off">
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button id="wallet-connect-btn" style="background:transparent;border:1px solid var(--border-cyan);color:var(--cyan);padding:5px 14px;border-radius:6px;font-family:var(--font-mono);font-size:12px;font-weight:600;letter-spacing:0.04em;cursor:pointer;transition:all 0.2s;" onclick="connectWalletUI()">Connect Wallet</button>
+    <div id="wallet-display" style="display:none;align-items:center;gap:8px;">
+      <span id="wallet-address" style="font-family:var(--font-mono);font-size:12px;color:var(--cyan);"></span>
+      <span class="status-dot" style="background:var(--green);display:inline-block;width:8px;height:8px;border-radius:50%;"></span>
+    </div>
+    <div class="status-badge live-badge" id="live-badge" style="display:none;">
+      <span class="live-dot"></span>
+      <span class="live-text">LIVE</span>
+    </div>
+    <div class="status-badge" id="topbar-status">
+      <span class="status-dot" id="topbar-dot"></span>
+      <span id="topbar-status-text">Online</span>
+    </div>
+
+  </div>
+</header>
+
+<!-- ======================================== -->
+<!-- MAIN CONTENT                             -->
+<!-- ======================================== -->
+<main class="main-content" id="main-content" role="main">
+
+  <!-- Setup Checklist (hidden once complete) -->
+  <div id="setup-checklist" class="card" style="margin-bottom:1.75rem; border:1px solid rgba(0,229,255,0.2); background:linear-gradient(135deg, rgba(0,229,255,0.04), rgba(179,136,255,0.04));">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+      <div class="card-title" style="color:var(--cyan); margin-bottom:0;">&#9881; Setup Checklist</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span id="setup-progress" style="font-size:0.7rem; color:var(--text-dim);">0 / 5</span>
+        <button id="checklist-dismiss" onclick="dismissChecklist()" aria-label="Dismiss checklist"
+          style="background:transparent;border:none;color:var(--text-dim);font-size:14px;cursor:pointer;line-height:1;padding:2px 4px;" title="Dismiss">&#x2715;</button>
+      </div>
+    </div>
+    <div id="setup-items" style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.82rem;"></div>
+  </div>
+
+  <!-- Agent Header -->
+  <div class="agent-header" id="agent-header">
+    <div class="agent-header-left">
+      <div class="agent-avatar" id="agent-avatar" aria-label="Agent avatar"></div>
+      <div class="agent-header-info">
+        <h2 id="agent-name">---</h2>
+        <div class="agent-header-meta">
+          <span id="agent-ens" style="color: var(--cyan);">---</span>
+          <span class="type-badge" id="agent-type-badge">---</span>
+          <span id="agent-status-inline">
+            <span class="status-dot" id="header-dot" style="display:inline-block; vertical-align:middle;"></span>
+            <span id="header-status-text" style="font-size: 0.75rem;">Online</span>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="agent-header-right">
+      <div class="uptime-display"><span>Uptime </span><span id="uptime">0h 0m 0s</span></div>
+      <div class="policy-hash-display">Policy: <span class="hash" id="policy-hash-short">---</span></div>
+    </div>
+  </div>
+
+  <!-- Metrics Grid -->
+  <div class="metrics-grid">
+    <!-- Agent Status Card -->
+    <div class="card">
+      <div class="card-title">Agent Status</div>
+      <div class="metric">
+        <span class="metric-label">Agent ID</span>
+        <span class="metric-value" id="metric-agent-id">---</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">ENS Name</span>
+        <span class="metric-value hash" id="metric-ens">---</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Uptime</span>
+        <span class="metric-value success" id="metric-uptime">0h 0m</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Policy Hash</span>
+        <span class="metric-value hash" id="metric-policy-hash">---</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Wallet Balance</span>
+        <span class="metric-value" id="metric-balance" style="color:var(--text-dim);">---</span>
+      </div>
+      <div class="metric" id="metric-live-row" style="display:none;">
+        <span class="metric-label">Connection</span>
+        <span class="metric-value" id="metric-live-label" style="color:var(--green);font-size:0.75rem;">&#11044; Live API</span>
+      </div>
+      <div id="agent-url-metric" style="display:none;margin-top:12px;padding:10px;background:rgba(0,229,255,0.04);border:1px solid var(--border-cyan);border-radius:6px;">
+        <div style="font-size:9px;color:var(--cyan-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Messaging URL</div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="dash-agent-url" readonly style="flex:1;padding:6px 8px;background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;color:var(--text-secondary);font-family:var(--font-mono);font-size:10px;outline:none;">
+          <button onclick="copyDashUrl()" style="padding:6px 10px;background:var(--bg-card);border:1px solid var(--border);border-radius:4px;color:var(--text-secondary);font-size:10px;cursor:pointer;font-family:var(--font-mono);">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Execution Stats Card -->
+    <div class="card">
+      <div class="card-title">Execution Stats</div>
+      <div class="metric">
+        <span class="metric-label">Total Actions</span>
+        <span class="metric-value" id="stat-total" data-live="false">&#x2014;</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Autonomous</span>
+        <span class="metric-value success" id="stat-autonomous" data-live="false">&#x2014;</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Ledger Approved</span>
+        <span class="metric-value warning" id="stat-approved" data-live="false">&#x2014;</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Policy Violations</span>
+        <span class="metric-value error" id="stat-violations" data-live="false">&#x2014;</span>
+      </div>
+    </div>
+
+    <!-- Proof Generation Card -->
+    <div class="card">
+      <div class="card-title">Proof Generation</div>
+      <div class="metric">
+        <span class="metric-label">Proofs Generated</span>
+        <span class="metric-value" id="stat-proofs" data-live="false">&#x2014;</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Verified On-Chain</span>
+        <span class="metric-value success" id="stat-verified" data-live="false">&#x2014;</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Avg. Proof Time</span>
+        <span class="metric-value" id="stat-proof-time">&#x2014;</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Provider</span>
+        <span class="metric-value">Boundless</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- My iNFTs -->
+  <div class="infts-section" id="infts-section" style="display:none;">
+    <div class="infts-header">
+      <div class="section-title">My iNFTs</div>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <span class="infts-count" id="infts-count">0</span>
+        <button class="infts-refresh-btn" onclick="loadWalletINFTs()" title="Refresh">Refresh</button>
+      </div>
+    </div>
+    <div id="infts-content">
+      <div class="infts-empty">Connect your wallet to view your minted iNFTs</div>
+    </div>
+  </div>
+
+  <!-- ═══ LEDGER SECURITY ZONE ═══════════════════════════════════════════ -->
+  <!-- State 1 (default): full-width connection card — security upgrade CTA -->
+  <div class="dash-ledger-card" id="dash-ledger-card">
+    <div class="dash-ledger-info">
+      <div class="dash-ledger-icon" id="dash-ledger-icon">&#x1F512;</div>
+      <div class="dash-ledger-details">
+        <h3 id="dash-ledger-title">Upgrade Security — Connect Ledger</h3>
+        <p id="dash-ledger-desc">Add a hardware wallet as the owner of your agents. High-value actions will require Ledger Clear Signing before execution.</p>
+        <div class="dash-ledger-meta" id="dash-ledger-meta" style="display:none;">
+          <div class="dash-ledger-meta-item">Device: <span id="dash-lmeta-device">---</span></div>
+          <div class="dash-ledger-meta-item">Address: <span id="dash-lmeta-address" style="color:var(--cyan);">---</span></div>
+          <div class="dash-ledger-meta-item">App: <span id="dash-lmeta-app">Ethereum</span></div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-ledger connect" id="dash-ledger-connect-btn" onclick="dashConnectLedger()">
+      &#x1F517; Connect Ledger
+    </button>
+  </div>
+
+  <!-- State 2: compact status bar — connected, no pending actions -->
+  <div class="dash-ledger-status-bar" id="dash-ledger-idle" style="display:none;">
+    <div class="dot-green"></div>
+    <span style="font-weight:600;color:var(--green,#00e676);font-family:var(--font-mono);font-size:0.78rem;">Ledger Active</span>
+    <span id="dash-lmeta-idle-addr" style="font-family:var(--font-mono);font-size:0.75rem;color:var(--cyan);"></span>
+    <span style="flex:1"></span>
+    <span style="font-size:0.75rem;color:var(--text-dim);">No pending approvals</span>
+    <a href="approve.html" style="font-size:0.75rem;color:var(--cyan);text-decoration:none;font-family:var(--font-mono);opacity:0.8;">Full page &#x2192;</a>
+  </div>
+
+  <!-- State 3: pending approvals block — only shown when count > 0 -->
+  <div class="pending-section" id="pending-section" style="display:none;">
+    <div class="pending-header">
+      <div class="pending-title">Pending Ledger Approvals</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="pending-count" id="pending-count">0</span>
+        <a href="approve.html" style="font-size:0.75rem;color:var(--cyan);text-decoration:none;font-family:var(--font-mono);letter-spacing:0.03em;opacity:0.8;" title="Open Ledger approval page">Go to Approve &#x2192;</a>
+      </div>
+    </div>
+    <div id="pending-list"></div>
+  </div>
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+  <!-- Ledger signing confirmation modal -->
+  <div id="dash-sign-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:2000;align-items:center;justify-content:center;" role="dialog" aria-modal="true" aria-labelledby="dash-sign-modal-title">
+    <div style="background:var(--bg-card);border:1px solid var(--amber);border-radius:12px;padding:1.75rem;max-width:420px;width:90%;box-shadow:0 0 50px rgba(255,179,0,0.12);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+        <div id="dash-sign-modal-title" style="font-size:0.95rem;font-weight:700;color:var(--amber);">&#x1F512; Sign on Ledger</div>
+        <button onclick="dashCloseSignModal()" style="background:transparent;border:none;color:var(--text-dim);font-size:1.1rem;cursor:pointer;">&times;</button>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:1rem;">Review the action below, then confirm on your Ledger device.</div>
+      <div id="dash-sign-detail" style="background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:0.8rem;font-family:var(--font-mono);line-height:1.8;margin-bottom:1.25rem;"></div>
+      <div style="display:flex;gap:10px;">
+        <button id="dash-sign-confirm-btn" onclick="dashConfirmSign()"
+          style="flex:1;padding:10px;background:var(--amber);color:#000;border:none;border-radius:7px;font-weight:700;font-family:var(--font-mono);font-size:0.82rem;cursor:pointer;">
+          &#x270F; Sign on Ledger
+        </button>
+        <button onclick="dashCloseSignModal()"
+          style="padding:10px 18px;background:transparent;color:var(--error);border:1px solid var(--error);border-radius:7px;font-family:var(--font-mono);font-size:0.82rem;cursor:pointer;">
+          Cancel
+        </button>
+      </div>
+      <div id="dash-sign-spinner" style="display:none;margin-top:1rem;text-align:center;color:var(--amber);font-size:0.8rem;font-family:var(--font-mono);">&#x23F3; Waiting for Ledger confirmation...</div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="activity-section">
+    <div class="section-title">Recent Activity</div>
+    <ul class="activity-list" id="activity-list" aria-live="polite">
+      <li id="activity-empty" class="activity-item" style="justify-content:center;color:var(--text-dim);font-size:0.8rem;padding:1.5rem 0;cursor:default;">
+        No activity yet &mdash; connect an agent to start
+      </li>
+    </ul>
+  </div>
+
+  <!-- Bridge Modal -->
+  <div id="bridge-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;" role="dialog" aria-modal="true" aria-labelledby="bridge-modal-title">
+    <div style="background:var(--bg-card);border:1px solid var(--border-cyan);border-radius:12px;padding:1.5rem;max-width:440px;width:90%;box-shadow:0 0 40px rgba(0,229,255,0.08);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <div id="bridge-modal-title" style="font-size:0.9rem;font-weight:600;color:var(--cyan);">Start Swarm Bridge</div>
+        <button onclick="closeBridgeModal()" style="background:transparent;border:none;color:var(--text-dim);font-size:1.1rem;cursor:pointer;">&times;</button>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.75rem;">Run this command in your project directory:</div>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--bg-primary);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">
+        <code id="bridge-cmd" style="flex:1;font-family:var(--font-mono);font-size:0.82rem;color:var(--cyan);user-select:all;">make run-swarm-bridge</code>
+        <button onclick="copyBridgeCmd()" aria-label="Copy command"
+          style="background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:4px 10px;font-size:0.75rem;color:var(--text-secondary);cursor:pointer;font-family:var(--font-mono);white-space:nowrap;">
+          Copy
+        </button>
+      </div>
+      <div style="margin-top:1rem;font-size:0.75rem;color:var(--text-dim);">The bridge enables cross-agent communication via the Swarm protocol. Health check: <code style="font-family:var(--font-mono);color:var(--cyan);">localhost:3002/health</code></div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <a class="btn btn-primary" id="btn-proofs" href="proofs.html">View Proofs</a>
+    <a class="btn btn-secondary" id="btn-messages" href="messages.html">DM3 Messages</a>
+    <a class="btn btn-secondary" href="agents.html">Back to Agents</a>
+  </div>
+
+</main>
+
+<script type="module" src="viem-client.js"></script>
+<script src="ledger-sdk.js?v=20260404f"></script>
+<script src="wallet.js"></script>
+<script src="nav.js"></script>
+<script src="shared.js"></script>
+<script src="poc-api.js"></script>
+<script>
+// No default mock agents — dashboard shows only real registered agents.
+// Use agents.html to create and register agents with your org.
+const DEFAULT_AGENTS = [];
+
+// One-time migration: purge stale mock alpha-sentinel data that may have been
+// saved to localStorage from a previous version of this page.
+(function purgeMockAgents() {
+  try {
+    const stored = JSON.parse(localStorage.getItem('poc_agents'));
+    if (Array.isArray(stored)) {
+      // Known mock agent IDs from the previous DEFAULT_AGENTS list
+      const MOCK_IDS = ['alpha-sentinel','defi-scout','sec-auditor','gov-delegate','yield-hunter','data-oracle','proof-agent'];
+      const real = stored.filter(a => !MOCK_IDS.includes(a.id));
+      if (real.length !== stored.length) {
+        // Some mocks were present — purge them
+        if (real.length > 0) {
+          localStorage.setItem('poc_agents', JSON.stringify(real));
+        } else {
+          localStorage.removeItem('poc_agents');
+        }
+      }
+    }
+  } catch (_) {}
+})();
+
+
+// =====================================================
+// STATE
+// =====================================================
+let agents = [];
+let currentAgent = null;
+let startTime = Date.now();
+let stats = {
+  total: 0,
+  autonomous: 0,
+  approved: 0,
+  violations: 0,
+  proofs: 0,
+  verified: 0
+};
+let activityTimers = [];
+
+// =====================================================
+// INIT
+// =====================================================
+function init() {
+  // Restore checklist visibility (respect dismiss)
+  try {
+    if (localStorage.getItem('poc_checklist_dismissed') === '1') {
+      var cl = document.getElementById('setup-checklist');
+      if (cl) cl.style.display = 'none';
+    }
+  } catch(_) {}
+
+  loadAgents();
+  const urlParams = new URLSearchParams(window.location.search);
+  const agentId = urlParams.get('agent');
+
+  if (agentId) {
+    currentAgent = agents.find(a => a.id === agentId);
+  }
+  if (!currentAgent && agents.length > 0) {
+    currentAgent = agents[0];
+  }
+
+  populateSelector();
+
+  if (currentAgent) {
+    renderAgent();
+
+    if (isLiveAgent()) {
+      // Connected to a live agent — poll real data, skip mock simulations
+      startLivePolling();
+    } else {
+      // No live connection — show mock data as before
+      startUptimeCounter();
+      seedActivity();
+      scheduleSimulations();
+    }
+  } else {
+    showEmptyState();
+  }
+}
+
+// =====================================================
+// LIVE POLLING
+// =====================================================
+let livePollingInterval = null;
+let liveConnected = false;
+let liveConsecutiveErrors = 0;
+
+function isLiveAgent() {
+  if (typeof PocAPI === 'undefined') return false;
+  if (!PocAPI.isConnected || !PocAPI.isConnected()) return false;
+  var conn = PocAPI.getConnection();
+  if (!conn || !currentAgent) return false;
+  // If current agent matches the connected agent, use live data
+  return currentAgent.id === conn.agentId;
+}
+
+function showLiveBadge(visible) {
+  var badge = document.getElementById('live-badge');
+  if (badge) badge.style.display = visible ? 'inline-flex' : 'none';
+}
+
+function showLiveError(msg) {
+  var existing = document.getElementById('live-error-banner');
+  if (msg) {
+    if (!existing) {
+      var banner = document.createElement('div');
+      banner.id = 'live-error-banner';
+      banner.className = 'live-error-banner';
+      banner.innerHTML = '<span class="error-dot"></span><span>' + esc(msg) + '</span>';
+      var main = document.getElementById('main-content');
+      if (main && main.firstChild) {
+        main.insertBefore(banner, main.firstChild);
+      }
+    } else {
+      existing.innerHTML = '<span class="error-dot"></span><span>' + esc(msg) + '</span>';
+      existing.style.display = 'flex';
+    }
+  } else if (existing) {
+    existing.style.display = 'none';
+  }
+}
+
+function startLivePolling() {
+  if (livePollingInterval) return; // already running
+  var conn = PocAPI.getConnection();
+  if (!conn) return;
+
+  liveConnected = true;
+  liveConsecutiveErrors = 0;
+  showLiveBadge(true);
+  showLiveError(null);
+
+  // ── Try WebSocket first ──
+  if (typeof PocAPI.openWebSocket === 'function') {
+    PocAPI.openWebSocket();
+
+    PocAPI.onWsEvent('snapshot', function(data) {
+      if (data.status) updateFromStatus(data.status);
+      if (data.proofs) updateFromProofs({ proofs: data.proofs });
+      liveConsecutiveErrors = 0;
+      showLiveBadge(true);
+      showLiveError(null);
+    });
+
+    PocAPI.onWsEvent('status', function(data) {
+      updateFromStatus(data);
+      liveConsecutiveErrors = 0;
+    });
+
+    PocAPI.onWsEvent('activity', function(data) {
+      // Single activity item pushed — fetch full list for display
+      var c = PocAPI.getConnection();
+      if (c) {
+        PocAPI.fetchActivity(c.url).then(function(actData) {
+          updateFromActivity(actData);
+        }).catch(function() {});
+      }
+    });
+
+    PocAPI.onWsEvent('proofs', function(data) {
+      var c = PocAPI.getConnection();
+      if (c) {
+        PocAPI.fetchProofs(c.url).then(function(proofsData) {
+          updateFromProofs(proofsData);
+        }).catch(function() {});
+      }
+    });
+
+    PocAPI.onWsEvent('message', function(data) {
+      // New message received — refresh activity
+      var c = PocAPI.getConnection();
+      if (c) {
+        PocAPI.fetchActivity(c.url).then(function(actData) {
+          updateFromActivity(actData);
+        }).catch(function() {});
+      }
+    });
+
+    PocAPI.onWsEvent('ws_open', function() {
+      showLiveBadge(true);
+      showLiveError(null);
+      liveConsecutiveErrors = 0;
+      // Stop polling fallback if it was running
+      if (livePollingInterval) {
+        clearInterval(livePollingInterval);
+        livePollingInterval = null;
+      }
+    });
+
+    PocAPI.onWsEvent('ws_close', function() {
+      // Fall back to polling while WebSocket reconnects
+      if (!livePollingInterval && liveConnected) {
+        startPollingFallback();
+      }
+    });
+  }
+
+  // Do an immediate HTTP poll for initial data regardless
+  pollOnce();
+
+  // Start polling fallback (will be stopped once WebSocket connects)
+  if (!PocAPI.isWebSocketOpen || !PocAPI.isWebSocketOpen()) {
+    startPollingFallback();
+  }
+}
+
+function startPollingFallback() {
+  if (livePollingInterval) return;
+  livePollingInterval = setInterval(pollOnce, 3000);
+}
+
+function pollOnce() {
+  if (!liveConnected) return;
+  var c = PocAPI.getConnection();
+  if (!c) {
+    stopLivePolling();
+    fallbackToMock();
+    return;
+  }
+  var baseUrl = c.url;
+
+  Promise.all([
+    PocAPI.fetchStatus(baseUrl).catch(function(e) { return { _error: e }; }),
+    PocAPI.fetchActivity(baseUrl).catch(function(e) { return { _error: e }; }),
+    PocAPI.fetchProofs(baseUrl).catch(function(e) { return { _error: e }; })
+  ]).then(function(results) {
+    var statusData = results[0];
+    var activityData = results[1];
+    var proofsData = results[2];
+
+    var allFailed = statusData._error && activityData._error && proofsData._error;
+    if (allFailed) {
+      liveConsecutiveErrors++;
+      if (liveConsecutiveErrors >= 3) {
+        showLiveError('Connection lost. Falling back to cached data. Retrying...');
+        showLiveBadge(false);
+      }
+      return;
+    }
+
+    liveConsecutiveErrors = 0;
+    showLiveError(null);
+    showLiveBadge(true);
+
+    if (statusData && !statusData._error) updateFromStatus(statusData);
+    if (activityData && !activityData._error) updateFromActivity(activityData);
+    if (proofsData && !proofsData._error) updateFromProofs(proofsData);
+  });
+}
+
+function stopLivePolling() {
+  if (livePollingInterval) {
+    clearInterval(livePollingInterval);
+    livePollingInterval = null;
+  }
+  if (typeof PocAPI !== 'undefined' && PocAPI.closeWebSocket) {
+    PocAPI.closeWebSocket();
+  }
+  liveConnected = false;
+  showLiveBadge(false);
+  showLiveError(null);
+}
+
+function fallbackToMock() {
+  // Re-render mock data for current agent
+  if (currentAgent) {
+    renderAgent();
+    var list = document.getElementById('activity-list');
+    if (list) list.innerHTML = '';
+    seedActivity();
+  }
+}
+
+function updateFromStatus(status) {
+  // Agent Status card
+  if (status.agent_id) {
+    document.getElementById('metric-agent-id').textContent = status.agent_id;
+    document.getElementById('agent-name').textContent = status.agent_id;
+  }
+  if (status.ens_name) {
+    document.getElementById('metric-ens').textContent = status.ens_name;
+    document.getElementById('agent-ens').textContent = status.ens_name;
+  }
+  if (status.network) {
+    document.getElementById('agent-type-badge').textContent = status.network;
+  }
+  if (status.policy_hash) {
+    document.getElementById('metric-policy-hash').textContent = status.policy_hash;
+    document.getElementById('policy-hash-short').textContent = status.policy_hash;
+  }
+
+  // Status indicator — only update when status is explicitly provided
+  var s = status.status || 'online';
+  var dotClass = s === 'online' ? '' : s === 'busy' ? 'busy' : 'offline';
+  var dotLabel = s === 'online' ? 'Online' : s === 'busy' ? 'Busy' : 'Offline';
+  document.getElementById('topbar-dot').className = 'status-dot' + (dotClass ? ' ' + dotClass : '');
+  document.getElementById('topbar-status-text').textContent = dotLabel;
+  document.getElementById('header-dot').className = 'status-dot' + (dotClass ? ' ' + dotClass : '');
+  document.getElementById('header-status-text').textContent = dotLabel;
+
+  // Uptime — anchor the 1s local tick to the server-reported uptime_secs
+  if (typeof status.uptime_secs === 'number') {
+    // Record when this reading was taken so the tick can extrapolate
+    _uptimeBase = status.uptime_secs;
+    _uptimeBaseTs = Date.now();
+  }
+
+  // Execution stats
+  if (status.stats) {
+    var st = status.stats;
+    // Mark as live so em-dash placeholders get replaced
+    ['stat-total','stat-autonomous','stat-approved','stat-violations','stat-proofs','stat-verified'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.setAttribute('data-live', 'true');
+    });
+    document.getElementById('stat-total').textContent = st.total_actions || 0;
+    document.getElementById('stat-autonomous').textContent = st.autonomous_actions || 0;
+    document.getElementById('stat-approved').textContent = st.approved_actions || 0;
+    document.getElementById('stat-violations').textContent = st.violations || 0;
+    document.getElementById('stat-proofs').textContent = st.proofs_generated || 0;
+    document.getElementById('stat-verified').textContent = st.proofs_verified || 0;
+    // Proof time if available
+    if (st.avg_proof_time_secs) {
+      var ptEl = document.getElementById('stat-proof-time');
+      if (ptEl) ptEl.textContent = '~' + st.avg_proof_time_secs + 's';
+    }
+  }
+
+  // Wallet balance
+  if (status.wallet_balance_wei !== undefined) {
+    updateBalance(status.wallet_balance_wei);
+  }
+
+  // Pending Ledger approvals from live API
+  if (typeof status.pending_approvals === 'number' && status.pending_approvals > 0) {
+    var countEl = document.getElementById('pending-count');
+    if (countEl) countEl.textContent = status.pending_approvals;
+    showPendingApproval();
+  }
+
+  // Live connection indicator
+  var liveRow = document.getElementById('metric-live-row');
+  if (liveRow) liveRow.style.display = 'flex';
+}
+
+function updateFromActivity(actData) {
+  var items = actData.items || actData.activity || actData;
+  if (!Array.isArray(items) || items.length === 0) return;
+
+  var list = document.getElementById('activity-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  // Remove empty state placeholder
+  var empty = document.getElementById('activity-empty');
+  if (empty) empty.style.display = 'none';
+
+  var icons = { proof: '\u27C1', message: '\u2709', approval: '\u2713' };
+  var shown = items.slice(0, 12);
+  for (var i = 0; i < shown.length; i++) {
+    var item = shown[i];
+    var li = document.createElement('li');
+    li.className = 'activity-item';
+    var actType = item.activity_type || item.type || 'proof';
+    var icon = icons[actType] || '\u2022';
+    var title = item.title || item.action || 'Activity';
+    var desc = item.description || item.details || '';
+
+    // Time ago
+    var agoStr = '';
+    if (item.timestamp) {
+      var ago = Math.floor(Date.now() / 1000 - item.timestamp);
+      if (ago < 0) ago = 0;
+      if (ago < 60) agoStr = 'Just now';
+      else if (ago < 3600) agoStr = Math.floor(ago / 60) + 'm ago';
+      else agoStr = Math.floor(ago / 3600) + 'h ago';
+    } else if (item.time) {
+      agoStr = item.time;
+    }
+
+    li.innerHTML = '<div class="activity-icon ' + esc(actType) + '">' + esc(icon) + '</div>' +
+      '<div class="activity-content"><div class="activity-title">' + esc(title) + '</div>' +
+      '<div class="activity-meta">' + esc(desc) + (agoStr ? ' &middot; ' + esc(agoStr) : '') + '</div></div>';
+    list.appendChild(li);
+  }
+}
+
+function updateFromProofs(proofsData) {
+  var proofs = proofsData.proofs || proofsData.items || proofsData;
+  if (!Array.isArray(proofs)) return;
+
+  // Update proof count stats from proof data
+  var total = proofs.length;
+  var verified = 0;
+  for (var i = 0; i < proofs.length; i++) {
+    if (proofs[i].verified || proofs[i].on_chain || proofs[i].status === 'verified') {
+      verified++;
+    }
+  }
+  document.getElementById('stat-proofs').textContent = total;
+  document.getElementById('stat-verified').textContent = verified;
+}
+
+// Legacy wrapper kept for compatibility
+function startLiveSync() {
+  if (isLiveAgent()) {
+    startLivePolling();
+  }
+}
+
+function loadAgents() {
+  try {
+    const stored = localStorage.getItem('poc_agents');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        agents = parsed;
+        return;
+      }
+    }
+  } catch (e) {}
+
+  // No real agents found — stay empty, show the empty state
+  agents = [];
+  // Do NOT write DEFAULT_AGENTS to localStorage.
+  // Real agents are added via poc-api.js syncLiveAgent() when you connect.
+}
+
+function populateSelector() {
+  const input = document.getElementById('agent-selector');
+  const wrap = input.closest('.agent-search-wrap');
+
+  // Create dropdown
+  let dropdown = wrap.querySelector('.agent-search-dropdown');
+  if (!dropdown) {
+    dropdown = document.createElement('div');
+    dropdown.className = 'agent-search-dropdown';
+    wrap.appendChild(dropdown);
+  }
+
+  // Show current agent name in input
+  if (currentAgent) {
+    input.value = currentAgent.ens || currentAgent.name + '.proofofclaw.eth';
+  }
+
+  function renderDropdown(filter) {
+    const q = (filter || '').toLowerCase();
+    const matches = agents.filter(a => {
+      const ens = (a.ens || a.name + '.proofofclaw.eth').toLowerCase();
+      return !q || a.name.toLowerCase().includes(q) || ens.includes(q) || a.id.toLowerCase().includes(q);
+    });
+    dropdown.innerHTML = '';
+    matches.forEach(a => {
+      const item = document.createElement('div');
+      item.className = 'agent-search-item';
+      const ens = a.ens || a.name + '.proofofclaw.eth';
+      item.innerHTML = '<span>' + (a.icon ? '<img src="' + a.icon + '" alt="" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">' : '') + a.name + '</span><span class="ens-hint">' + ens + '</span>';
+      item.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        window.location.href = 'dashboard.html?agent=' + encodeURIComponent(a.id);
+      });
+      dropdown.appendChild(item);
+    });
+    dropdown.classList.toggle('open', matches.length > 0);
+  }
+
+  input.addEventListener('focus', function() {
+    input.select();
+    renderDropdown(input.value);
+  });
+
+  input.addEventListener('input', function() {
+    renderDropdown(input.value);
+  });
+
+  input.addEventListener('blur', function() {
+    dropdown.classList.remove('open');
+  });
+
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      const first = dropdown.querySelector('.agent-search-item');
+      if (first) first.dispatchEvent(new MouseEvent('mousedown'));
+    }
+    if (e.key === 'Escape') {
+      dropdown.classList.remove('open');
+      input.blur();
+    }
+  });
+}
+
+function switchAgent(id) {
+  window.location.href = 'dashboard.html?agent=' + encodeURIComponent(id);
+}
+
+// =====================================================
+// RENDER AGENT
+// =====================================================
+function renderAgent() {
+  const a = currentAgent;
+  const statusClass = a.status === 'online' ? '' : a.status === 'busy' ? 'busy' : 'offline';
+  const statusLabel = a.status === 'online' ? 'Online' : a.status === 'busy' ? 'Busy' : 'Offline';
+
+  // Header — use SVG avatar generator
+  document.getElementById('agent-avatar').innerHTML = generateAvatar(a);
+  document.getElementById('agent-name').textContent = a.name;
+  document.getElementById('agent-ens').textContent = a.ens || a.name + '.proofofclaw.eth';
+  document.getElementById('agent-type-badge').textContent = a.type || 'agent';
+  document.getElementById('header-dot').className = 'status-dot' + (statusClass ? ' ' + statusClass : '');
+  document.getElementById('header-status-text').textContent = statusLabel;
+  document.getElementById('policy-hash-short').textContent = a.policyHash || '0x' + a.id.slice(0, 4) + '...' + a.id.slice(-4);
+
+  // Topbar status
+  document.getElementById('topbar-dot').className = 'status-dot' + (statusClass ? ' ' + statusClass : '');
+  document.getElementById('topbar-status-text').textContent = statusLabel;
+
+  // Metrics - Agent Status card
+  document.getElementById('metric-agent-id').textContent = a.id;
+  document.getElementById('metric-ens').textContent = a.ens || a.name + '.proofofclaw.eth';
+  document.getElementById('metric-policy-hash').textContent = a.policyHash || '0x' + a.id.slice(0, 4) + '...' + a.id.slice(-4);
+
+  // Set initial stats from agent data
+  stats.total = a.tasks || 0;
+  stats.autonomous = Math.floor((a.tasks || 0) * 0.7);
+  stats.approved = Math.floor((a.tasks || 0) * 0.25);
+  stats.violations = Math.floor((a.tasks || 0) * 0.05);
+  stats.proofs = Math.floor((a.tasks || 0) * 0.9);
+  stats.verified = Math.floor((a.tasks || 0) * 0.85);
+  updateStats();
+
+  // Quick action links
+  document.getElementById('btn-proofs').href = 'proofs.html?agent=' + encodeURIComponent(a.id);
+  document.getElementById('btn-messages').href = 'messages.html?agent=' + encodeURIComponent(a.id);
+
+  // Show agent URL if available
+  const urlMetric = document.getElementById('agent-url-metric');
+  const urlInput = document.getElementById('dash-agent-url');
+  if (a.endpoints) {
+    urlMetric.style.display = 'block';
+    urlInput.value = a.endpoints;
+  } else {
+    urlMetric.style.display = 'none';
+  }
+
+  // Update sidebar nav links with agent param
+  document.querySelectorAll('.sidebar-nav a').forEach(link => {
+    const href = link.getAttribute('href');
+    if (href && href !== '#' && !href.includes('index.html')) {
+      const base = href.split('?')[0];
+      if (base === 'dashboard.html') {
+        link.href = base + '?agent=' + encodeURIComponent(a.id);
+      }
+    }
+  });
+}
+
+function updateStats() {
+  // Only update elements that have been confirmed live (data-live=true)
+  // Elements start with data-live="false" and em-dash — don't overwrite with mock
+  var ids = ['stat-total','stat-autonomous','stat-approved','stat-violations','stat-proofs','stat-verified'];
+  var vals = [stats.total, stats.autonomous, stats.approved, stats.violations, stats.proofs, stats.verified];
+  for (var i = 0; i < ids.length; i++) {
+    var el = document.getElementById(ids[i]);
+    if (el && el.getAttribute('data-live') === 'true') {
+      el.textContent = vals[i];
+    }
+  }
+}
+
+function copyDashUrl() {
+  const input = document.getElementById('dash-agent-url');
+  if (!input) return;
+  input.select();
+  navigator.clipboard.writeText(input.value).then(() => {
+    const btn = input.nextElementSibling;
+    if (btn) {
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 1500);
+    }
+  });
+}
+
+// =====================================================
+// UPTIME COUNTER
+// =====================================================
+// _uptimeBase/Ts are set by syncLiveAgent() when a status poll succeeds.
+// The tick uses them to show the agent's actual uptime (not page-session time).
+var _uptimeBase = null;
+var _uptimeBaseTs = null;
+
+function startUptimeCounter() {
+  function tick() {
+    var secs;
+    if (_uptimeBase !== null && _uptimeBaseTs !== null) {
+      // Extrapolate from last known server value
+      secs = _uptimeBase + Math.round((Date.now() - _uptimeBaseTs) / 1000);
+    } else {
+      // Not yet connected — show dashes
+      document.getElementById('uptime').textContent = '---';
+      document.getElementById('metric-uptime').textContent = '---';
+      return;
+    }
+    var h = Math.floor(secs / 3600);
+    var m = Math.floor((secs % 3600) / 60);
+    var s = secs % 60;
+    document.getElementById('uptime').textContent = h + 'h ' + m + 'm ' + s + 's';
+    document.getElementById('metric-uptime').textContent = h + 'h ' + m + 'm';
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// =====================================================
+// ACTIVITY FEED
+// =====================================================
+function addActivity(type, title, description) {
+  const list = document.getElementById('activity-list');
+  const icons = { proof: '\u27C1', message: '\u2709', approval: '\u2713' };
+  const li = document.createElement('li');
+  li.className = 'activity-item fade-in';
+  li.innerHTML =
+    '<div class="activity-icon ' + esc(type) + '">' + (icons[type] || '\u27C1') + '</div>' +
+    '<div class="activity-content">' +
+      '<div class="activity-title">' + esc(title) + '</div>' +
+      '<div class="activity-meta">' + esc(description) + '</div>' +
+    '</div>';
+  list.insertBefore(li, list.firstChild);
+  // Keep max 12 items
+  while (list.children.length > 12) {
+    list.removeChild(list.lastChild);
+  }
+}
+
+// seedActivity — no-op when not live; real data comes from /api/activity poll
+function seedActivity() {
+  // Intentionally empty — activity is populated by startLivePolling() / updateFromActivity()
+  // when a live agent is connected. Show the empty state placeholder instead.
+  const empty = document.getElementById('activity-empty');
+  if (empty) empty.style.display = '';
+}
+
+// scheduleSimulations — no mock timers; all data comes from live API
+function scheduleSimulations() {
+  // No mock timers. Connect a live agent to see real activity.
+}
+
+
+// =====================================================
+// LEDGER STATE (dashboard inline signing)
+// =====================================================
+var _dashEthApp      = null;   // hw-app-eth instance
+var _dashLedgerAddr  = null;   // checksummed address from device
+var _dashTransport   = null;   // kept alive across retries
+var _dashLedgerSim   = false;  // true when WebHID unavailable
+var _dashSignAction  = null;   // action object being signed
+
+const DASH_DERIVE_PATH = "44'/60'/0'/0/0";
+const DASH_EIP712_DOMAIN = { name: 'ProofOfClaw', version: '1', chainId: 11155111 };
+const DASH_EIP712_TYPES = {
+  ApprovalAction: [
+    { name: 'description', type: 'string' },
+    { name: 'value_wei',   type: 'uint64' },
+    { name: 'nonce',       type: 'uint64' },
+    { name: 'timestamp',   type: 'uint64' },
+  ],
+};
+
+// ─── State machine ──────────────────────────────────────────────────────────
+// 'card'    → Ledger not connected: full-width upgrade CTA (default)
+// 'idle'    → Ledger connected, no pending: compact green status bar
+// 'pending' → Ledger connected, has pending: amber approval block
+function dashLedgerSetState(state) {
+  var card    = document.getElementById('dash-ledger-card');
+  var idleBar = document.getElementById('dash-ledger-idle');
+  var pending = document.getElementById('pending-section');
+
+  // Hide all, then show the right one
+  if (card)    card.style.display    = 'none';
+  if (idleBar) idleBar.style.display = 'none';
+  if (pending) pending.style.display = 'none';
+
+  if (state === 'card') {
+    if (card) card.style.display = 'flex';
+  } else if (state === 'idle') {
+    if (idleBar) idleBar.style.display = 'flex';
+    // Populate address in idle bar
+    var addrEl = document.getElementById('dash-lmeta-idle-addr');
+    if (addrEl && _dashLedgerAddr) {
+      addrEl.textContent = _dashLedgerAddr.slice(0, 8) + '\u2026' + _dashLedgerAddr.slice(-4);
+    }
+  } else if (state === 'pending') {
+    if (pending) pending.style.display = 'block';
+  }
+}
+
+// ─── Ledger connection ───────────────────────────────────────────────────────
+async function dashConnectLedger() {
+  var btn = document.getElementById('dash-ledger-connect-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Connecting...'; }
+
+  var SDK  = window.LedgerSDK;
+  var THID = SDK && SDK.TransportWebHID;
+  var Eth  = SDK && SDK.Eth;
+
+  // Card: update icon to show connecting
+  var icon = document.getElementById('dash-ledger-icon');
+  if (icon) icon.textContent = '\u23F3';
+
+  if (!navigator.hid || !THID) {
+    // No WebHID — simulated
+    await new Promise(function(r) { setTimeout(r, 900); });
+    _dashEthApp = null;
+    _dashLedgerAddr = '0xSimulated000000000000000000000000000deadbeef';
+    _dashLedgerSim = true;
+    _dashOnLedgerConnected('Ledger (Simulated)', _dashLedgerAddr, true);
+    return;
+  }
+
+  try {
+    var transport = _dashTransport;
+    if (!transport) {
+      var permitted = await THID.list();
+      transport = permitted.length > 0
+        ? await THID.open(permitted[0])
+        : await THID.request();
+      _dashTransport = transport;
+    }
+    var eth = new Eth(transport);
+    var res = await eth.getAddress(DASH_DERIVE_PATH, false, false);
+    _dashEthApp = eth;
+    _dashLedgerAddr = res.address;
+    _dashLedgerSim = false;
+    var dev = (transport.device && transport.device.productName) || 'Ledger Device';
+    _dashOnLedgerConnected(dev, res.address, false);
+
+  } catch(err) {
+    var emsg = (err && err.message) || String(err);
+    if (btn) { btn.disabled = false; btn.textContent = '\uD83D\uDD17 Connect Ledger'; }
+    if (icon) icon.textContent = '\uD83D\uDD12';
+
+    var descEl = document.getElementById('dash-ledger-desc');
+    if (emsg.toLowerCase().includes('cancel') || emsg.toLowerCase().includes('no device')) {
+      _dashTransport = null;
+      if (descEl) descEl.textContent = 'Connection cancelled. Click Connect Ledger to try again.';
+      return;
+    }
+    if (emsg.includes('0x5515') || emsg.toLowerCase().includes('locked')) {
+      if (descEl) descEl.innerHTML = '⚠️ <strong>Device locked.</strong> Enter your PIN on the Ledger, then click Connect Ledger again.';
+    } else if (
+      emsg.includes('0x6511') || emsg.includes('0x6d00') || emsg.includes('0x6e00') ||
+      emsg.includes('0x6700') || emsg.toLowerCase().includes('ethereum') ||
+      emsg.toLowerCase().includes('unknown_error') || emsg.toLowerCase().includes('app not open')
+    ) {
+      if (descEl) descEl.innerHTML =
+        '⚠️ <strong>Ethereum app not open.</strong><br>' +
+        '📱 On your Ledger: <strong>navigate to the Ethereum app</strong> and press both buttons to open it.<br>' +
+        'Then click <strong>Connect Ledger</strong> again.';
+    } else {
+      if (descEl) descEl.textContent = '\u26A0\uFE0F Error: ' + emsg.slice(0, 100);
+    }
+    console.error('Dash Ledger connect:', err);
+    _dashTransport = null;
+  }
+}
+
+function _dashOnLedgerConnected(deviceName, address, isSimulated) {
+  // Update the card to connected state (briefly shown, then transitions to idle)
+  var card   = document.getElementById('dash-ledger-card');
+  var icon   = document.getElementById('dash-ledger-icon');
+  var title  = document.getElementById('dash-ledger-title');
+  var desc   = document.getElementById('dash-ledger-desc');
+  var meta   = document.getElementById('dash-ledger-meta');
+  var btn    = document.getElementById('dash-ledger-connect-btn');
+
+  if (card)  card.classList.add('connected');
+  if (icon)  icon.textContent = '\uD83D\uDD13';
+  if (title) title.textContent = 'Ledger Connected' + (isSimulated ? ' (Simulated)' : '');
+  if (desc)  desc.textContent  = 'Hardware wallet active. High-value actions will require your signature.';
+  if (meta)  meta.style.display = 'flex';
+  var devEl = document.getElementById('dash-lmeta-device');
+  var addrEl = document.getElementById('dash-lmeta-address');
+  if (devEl)  devEl.textContent  = deviceName;
+  if (addrEl) addrEl.textContent = address;
+  if (btn) {
+    btn.textContent = '\u2714 Connected';
+    btn.className   = 'btn-ledger disconnect';
+    btn.style.cursor = 'default';
+    btn.disabled = true;
+  }
+
+  // Transition to idle state after 1.5 s (card fades out, compact bar appears)
+  setTimeout(function() {
+    dashLedgerSetState('idle');
+  }, 1500);
+
+  // Log to activity feed
+  addActivity('approval', 'Ledger Connected',
+    (isSimulated ? 'Simulated mode' : deviceName) + ' \u2022 ' +
+    address.slice(0, 8) + '\u2026' + address.slice(-4));
+}
+function showPendingApproval() {
+  var section = document.getElementById('pending-section');
+  var list    = document.getElementById('pending-list');
+  var a       = currentAgent;
+  var limit   = (a && a.spendLimit) || 100;
+
+  // Build action object
+  _dashSignAction = {
+    id:          'dash-act-' + Date.now(),
+    agentId:     (a && a.id) || 'agent',
+    agentName:   (a && a.name) || 'Agent',
+    type:        'transfer',
+    description: 'Transfer 500 USDC to 0xd8dA\u20266045',
+    valueEth:    '0.500',
+    valueUsd:    '500.00',
+    to:          '0xd8dA...6045',
+    gasLimit:    '21,000',
+    chain:       'Sepolia Testnet',
+  };
+
+  section.style.display = 'block';
+  section.classList.add('fade-in');
+
+  list.innerHTML =
+    '<div class="approval-card">' +
+      '<div class="approval-desc">High-Value Transfer Requires Ledger Approval</div>' +
+      '<div class="approval-meta">Transfer 500 USDC to 0xd8dA\u20266045 exceeds autonomous limit</div>' +
+      '<div class="approval-details">' +
+        'Action Value: 500 USDC ($500.00)<br>' +
+        'Autonomous Limit: ' + esc(String(limit)) + ' USDC<br>' +
+        'To: 0xd8dA...6045<br>' +
+        '<span class="hash">Output Commitment: 0xabcd1234ef5678900987654321fedcba...ef01</span>' +
+      '</div>' +
+      '<div class="approval-actions">' +
+        '<button class="btn btn-amber" onclick="dashOpenSignModal()">&#x270F; Sign on Ledger</button>' +
+        '<button class="btn btn-danger" onclick="rejectAction()">Reject</button>' +
+      '</div>' +
+    '</div>';
+
+  addActivity('approval', 'Approval Requested', 'Transfer 500 USDC \u2022 Awaiting Ledger \u2022 Just now');
+}
+
+function dashOpenSignModal() {
+  if (!_dashEthApp && !_dashLedgerSim) {
+    // Auto-connect first — open modal after success
+    dashConnectLedger().then(function() {
+      if (_dashEthApp || _dashLedgerSim) dashOpenSignModal();
+    });
+    return;
+  }
+  if (!_dashSignAction) return;
+  var det = document.getElementById('dash-sign-detail');
+  if (det) {
+    det.innerHTML =
+      '<div><span style="color:var(--text-dim)">Action: </span>' + esc(_dashSignAction.description) + '</div>' +
+      '<div><span style="color:var(--text-dim)">Value:  </span>' + esc(_dashSignAction.valueEth) + ' ETH (~$' + esc(_dashSignAction.valueUsd) + ')</div>' +
+      '<div><span style="color:var(--text-dim)">To:     </span>' + esc(_dashSignAction.to) + '</div>' +
+      '<div><span style="color:var(--text-dim)">Chain:  </span>' + esc(_dashSignAction.chain) + '</div>' +
+      '<div><span style="color:var(--text-dim)">Signer: </span><span style="color:var(--cyan);">' + (_dashLedgerSim ? 'Simulated' : esc(_dashLedgerAddr || '---')) + '</span></div>';
+  }
+  var m = document.getElementById('dash-sign-modal');
+  if (m) m.style.display = 'flex';
+  var spinner = document.getElementById('dash-sign-spinner');
+  if (spinner) spinner.style.display = 'none';
+  var btn = document.getElementById('dash-sign-confirm-btn');
+  if (btn) btn.disabled = false;
+}
+
+function dashCloseSignModal() {
+  var m = document.getElementById('dash-sign-modal');
+  if (m) m.style.display = 'none';
+}
+
+async function dashConfirmSign() {
+  if (!_dashSignAction) return;
+  var btn     = document.getElementById('dash-sign-confirm-btn');
+  var spinner = document.getElementById('dash-sign-spinner');
+  if (btn) btn.disabled = true;
+  if (spinner) spinner.style.display = 'block';
+
+  var action    = _dashSignAction;
+  var nonce     = Math.floor(Math.random() * Math.pow(2, 32));
+  var timestamp = Math.floor(Date.now() / 1000);
+  var valueWei  = Math.round(parseFloat(action.valueEth || '0') * 1e18);
+
+  var typedData = {
+    domain:      DASH_EIP712_DOMAIN,
+    types:       DASH_EIP712_TYPES,
+    primaryType: 'ApprovalAction',
+    message: {
+      description: action.description,
+      value_wei:   valueWei,
+      nonce:       nonce,
+      timestamp:   timestamp,
+    },
+  };
+
+  var signature = null;
+  var txHash    = null;
+
+  try {
+    if (_dashEthApp && !_dashLedgerSim) {
+      // ── Real Ledger path (EIP-712 hashed signing) ────────────────
+      // signEIP712HashedMessage bypasses hw-app-eth API fetching → no CORS
+      var ethers = window.ethers;
+      if (!ethers || !ethers.TypedDataEncoder) throw new Error('ethers.TypedDataEncoder not loaded');
+      var domainHash  = ethers.TypedDataEncoder.hashDomain(typedData.domain);
+      var messageHash = ethers.TypedDataEncoder.hashStruct(
+        typedData.primaryType, typedData.types, typedData.message
+      );
+      var result = await _dashEthApp.signEIP712HashedMessage(
+        DASH_DERIVE_PATH,
+        domainHash.substring(2),
+        messageHash.substring(2)
+      );
+      var vHex  = result.v.toString(16).padStart(2, '0');
+      signature = '0x' + result.r + result.s + vHex;
+      // POST to backend if agent connected
+      if (typeof PocAPI !== 'undefined' && PocAPI.isConnected()) {
+        var conn = PocAPI.getConnection();
+        try {
+          var resp = await fetch(conn.url + '/api/approve-action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + (localStorage.getItem('poc_gateway_token') || '') },
+            body: JSON.stringify({ action_id: action.id, signature: signature, signer: _dashLedgerAddr, typed_data: typedData }),
+          });
+          if (resp.ok) { var d = await resp.json(); txHash = d.tx_hash || null; }
+        } catch(_) {}
+      }
+    } else {
+      // ── Simulated path ───────────────────────────────────────────
+      await new Promise(function(r) { setTimeout(r, 1800); });
+      signature = '0xSIMULATED';
+    }
+
+    // Record result in activity feed
+    var sigDisplay = (signature && signature !== '0xSIMULATED')
+      ? signature.slice(0, 14) + '\u2026'
+      : '(simulated)';
+    addActivity('approval', 'Ledger Approval Granted',
+      'Transfer 500 USDC \u2022 Signed: ' + sigDisplay + (txHash ? ' \u2022 tx: ' + txHash.slice(0, 10) + '\u2026' : ''));
+
+    document.getElementById('pending-section').style.display = 'none';
+    dashCloseSignModal();
+    _dashSignAction = null;
+
+  } catch(err) {
+    var emsg = (err && err.message) || String(err);
+    if (spinner) spinner.style.display = 'none';
+    if (btn) btn.disabled = false;
+    // Show inline error in modal
+    var det2 = document.getElementById('dash-sign-detail');
+    if (det2) {
+      var errDiv = document.createElement('div');
+      errDiv.style.cssText = 'margin-top:8px;color:var(--error);font-size:0.78rem;';
+      errDiv.textContent = '\u26A0\uFE0F Error: ' + emsg.slice(0, 120);
+      det2.appendChild(errDiv);
+    }
+    console.error('Dash Ledger sign:', err);
+  }
+}
+
+function rejectAction() {
+  document.getElementById('pending-section').style.display = 'none';
+  addActivity('approval', 'Action Rejected', 'Transfer 500 USDC \u2022 Rejected by owner \u2022 Just now');
+  _dashSignAction = null;
+}
+
+// =====================================================
+// EMPTY STATE
+// =====================================================
+// =====================================================
+// AVATAR GENERATOR
+// =====================================================
+function generateAvatar(agent) {
+  // If agent has a valid SVG icon path, use it
+  if (agent.icon && agent.icon.endsWith('.svg')) {
+    return '<img src="' + agent.icon + '" alt="" style="width:100%;height:100%;object-fit:contain;" ' +
+           'onerror="this.parentNode.innerHTML=generateAvatarSVG(\'' + (agent.id || 'a') + '\')">';
+  }
+  return generateAvatarSVG(agent.id || agent.name || 'agent');
+}
+
+function generateAvatarSVG(id) {
+  // Deterministic color from id hash
+  var hash = 0;
+  for (var i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
+  var hue = Math.abs(hash) % 360;
+  var letters = id.replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase() || id.slice(0, 2).toUpperCase();
+  var bg = 'hsl(' + hue + ',55%,18%)';
+  var fg = 'hsl(' + hue + ',80%,65%)';
+  var border = 'hsl(' + hue + ',60%,35%)';
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 48 48">' +
+    '<rect width="48" height="48" rx="10" fill="' + bg + '" stroke="' + border + '" stroke-width="1.5"/>' +
+    '<text x="24" y="31" text-anchor="middle" font-family="monospace" font-size="16" font-weight="700" fill="' + fg + '">' + letters + '</text>' +
+    '</svg>';
+}
+
+// =====================================================
+// CHECKLIST & MODAL HELPERS
+// =====================================================
+function dismissChecklist() {
+  var wrapper = document.getElementById('setup-checklist');
+  if (wrapper) {
+    wrapper.style.transition = 'opacity 0.3s';
+    wrapper.style.opacity = '0';
+    setTimeout(function() { wrapper.style.display = 'none'; }, 300);
+  }
+  try { localStorage.setItem('poc_checklist_dismissed', '1'); } catch(_) {}
+}
+
+function openBridgeModal() {
+  var m = document.getElementById('bridge-modal');
+  if (m) { m.style.display = 'flex'; }
+}
+
+function closeBridgeModal() {
+  var m = document.getElementById('bridge-modal');
+  if (m) { m.style.display = 'none'; }
+}
+
+function openDM3Modal() {
+  var m = document.getElementById('bridge-modal');
+  var title = document.getElementById('bridge-modal-title');
+  var cmd = document.getElementById('bridge-cmd');
+  if (title) title.textContent = 'Start DM3 Delivery Service';
+  if (cmd) cmd.textContent = 'make run-delivery-service';
+  if (m) m.style.display = 'flex';
+}
+
+function copyBridgeCmd() {
+  var cmd = document.getElementById('bridge-cmd');
+  if (cmd) {
+    navigator.clipboard.writeText(cmd.textContent).then(function() {
+      var btn = cmd.nextElementSibling;
+      if (btn) { btn.textContent = 'Copied!'; setTimeout(function() { btn.textContent = 'Copy'; }, 1500); }
+    }).catch(function() {
+      // Fallback: select text
+      var range = document.createRange();
+      range.selectNode(cmd);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+    });
+  }
+}
+
+function updateBalance(weiStr) {
+  var el = document.getElementById('metric-balance');
+  if (!el) return;
+  if (!weiStr || weiStr === '0' || weiStr === '') {
+    el.textContent = '0.000 ETH';
+    el.style.color = 'var(--error)';
+    return;
+  }
+  try {
+    var eth = parseFloat(weiStr) / 1e18;
+    var display = eth.toFixed(4) + ' ETH';
+    el.textContent = display;
+    el.style.color = eth < 0.01 ? 'var(--error)' : eth < 0.1 ? 'var(--amber)' : 'var(--green)';
+  } catch(_) {
+    el.textContent = '---';
+    el.style.color = 'var(--text-dim)';
+  }
+}
+
+// =====================================================
+// SHOW EMPTY STATE
+// =====================================================
+function showEmptyState() {
+  const main = document.getElementById('main-content');
+  if (!main) return;
+  main.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;gap:1.5rem;padding:2rem;">
+      <div style="font-size:3rem;opacity:0.3;">⟁</div>
+      <div>
+        <h2 style="font-family:var(--font-display,Syne,sans-serif);font-size:1.4rem;font-weight:700;color:var(--text-primary,#e8ecf4);margin:0 0 0.5rem;">No agents connected</h2>
+        <p style="color:var(--text-secondary,#8892a4);font-size:0.9rem;line-height:1.6;max-width:420px;margin:0 auto;">
+          The dashboard shows live data from your registered agents.<br>
+          Connect a running agent to see its status, activity, and proofs here.
+        </p>
+      </div>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
+        <button
+          onclick="typeof PocAPI !== 'undefined' && PocAPI.showConnectModal()"
+          style="padding:10px 22px;background:var(--cyan,#00e5ff);color:#06080d;border:none;border-radius:8px;font-family:var(--font-mono,'JetBrains Mono',monospace);font-weight:700;font-size:13px;cursor:pointer;letter-spacing:0.04em;transition:all 0.2s;"
+          onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+          ⚡ Connect Live Agent
+        </button>
+        <a href="agents.html"
+          style="padding:10px 22px;background:transparent;color:var(--text-secondary,#8892a4);border:1px solid rgba(255,255,255,0.08);border-radius:8px;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:13px;cursor:pointer;text-decoration:none;transition:all 0.2s;"
+          onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='var(--text-primary,#e8ecf4)'"
+          onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--text-secondary,#8892a4)'">
+          Manage Agents →
+        </a>
+      </div>
+      <p style="color:var(--text-dim,#4a5568);font-size:0.75rem;font-family:var(--font-mono,'JetBrains Mono',monospace);">
+        Start your agent: <code style="color:var(--cyan,#00e5ff);background:rgba(0,229,255,0.06);padding:2px 6px;border-radius:3px;">cargo run -- --port 8420</code>
+      </p>
+    </div>`;
+}
+
+// =====================================================
+// SETUP CHECKLIST
+// =====================================================
+function runSetupChecklist() {
+  var BRIDGE_URL = window.POC_BRIDGE_URL || 'http://localhost:3002';
+  var RPC_URL = 'https://eth-sepolia.g.alchemy.com/v2/';
+  var WALLET_ADDR = '0x04E20e5AfC08759930846d72272b0d7d7D0d7C4b';
+
+  var checks = [
+    {
+      id: 'org',
+      label: 'Register organization',
+      test: function() { return !!getOrg(); },
+      action: 'showOrgRegistration()',
+      actionLabel: 'Register'
+    },
+    {
+      id: 'rpc',
+      label: 'Configure RPC endpoint',
+      test: function() {
+        // Check if agent API is reachable (implies RPC is set)
+        return PocAPI.isConnected();
+      },
+      action: 'PocAPI.showConnectModal()',
+      actionLabel: 'Connect Agent'
+    },
+    {
+      id: 'wallet',
+      label: 'Fund agent wallet',
+      sublabel: '<span style="font-family:var(--font-mono);font-size:10px;color:var(--cyan);user-select:all;">' + esc(WALLET_ADDR) + '</span> \u2014 send Sepolia ETH from a <a href="https://sepoliafaucet.com" target="_blank" rel="noopener" style="color:var(--cyan);">faucet</a>',
+      test: function() { return false; }, // async check below
+      asyncTest: function() {
+        var conn = PocAPI.getConnection();
+        if (!conn) return Promise.resolve(false);
+        return PocAPI.fetchStatus(conn.url)
+          .then(function(s) { return s && s.wallet_balance_wei && s.wallet_balance_wei !== '0'; })
+          .catch(function() { return false; });
+      },
+      actionLabel: 'Copy Address',
+      action: 'navigator.clipboard.writeText("' + WALLET_ADDR + '")'
+    },
+    {
+      id: 'bridge',
+      label: 'Swarm bridge running',
+      test: function() { return false; },
+      asyncTest: function() {
+        return fetch(BRIDGE_URL + '/health', { signal: AbortSignal.timeout(2000) })
+          .then(function(r) { return r.ok; })
+          .catch(function() { return false; });
+      },
+      actionLabel: 'Start Bridge',
+      action: 'openBridgeModal()'
+    },
+    {
+      id: 'dm3',
+      label: 'DM3 delivery service running',
+      test: function() { return false; },
+      asyncTest: function() {
+        return fetch('http://localhost:3001/health', { signal: AbortSignal.timeout(2000) })
+          .then(function(r) { return r.ok; })
+          .catch(function() { return false; });
+      },
+      actionLabel: 'Start DM3',
+      action: 'openDM3Modal()'
+    }
+  ];
+
+  var container = document.getElementById('setup-items');
+  var progressEl = document.getElementById('setup-progress');
+  var wrapper = document.getElementById('setup-checklist');
+  if (!container || !wrapper) return;
+
+  var completed = 0;
+  var total = checks.length;
+
+  function render() {
+    var html = '';
+    checks.forEach(function(c) {
+      var done = c._passed;
+      var icon = done
+        ? '<span style="color:var(--green);margin-right:8px;">&#x2713;</span>'
+        : '<span style="color:var(--text-dim);margin-right:8px;">&#x25CB;</span>';
+      var label = done
+        ? '<span style="color:var(--text-dim);text-decoration:line-through;">' + esc(c.label) + '</span>'
+        : '<span style="color:var(--text-primary);">' + esc(c.label) + '</span>';
+      var sub = c.sublabel && !done ? '<div style="margin-left:22px;margin-top:2px;font-size:11px;color:var(--text-secondary);">' + c.sublabel + '</div>' : '';
+      var btn = !done && c.action
+        ? ' <button onclick="' + c.action + '" style="margin-left:auto;padding:3px 10px;font-size:11px;background:var(--bg-card);border:1px solid var(--border-cyan);border-radius:4px;color:var(--cyan);cursor:pointer;">' + esc(c.actionLabel) + '</button>'
+        : '';
+      html += '<div style="display:flex;align-items:center;padding:6px 0;">' + icon + label + btn + '</div>' + sub;
+    });
+    container.innerHTML = html;
+    progressEl.textContent = completed + ' / ' + total;
+
+    if (completed >= total) {
+      wrapper.style.display = 'none';
+    } else {
+      wrapper.style.display = 'block';
+    }
+  }
+
+  // Run sync checks first
+  checks.forEach(function(c) {
+    c._passed = c.test();
+    if (c._passed) completed++;
+  });
+  render();
+
+  // Run async checks
+  var asyncChecks = checks.filter(function(c) { return c.asyncTest && !c._passed; });
+  if (asyncChecks.length === 0) return;
+
+  Promise.all(asyncChecks.map(function(c) {
+    return c.asyncTest().then(function(ok) {
+      if (ok) { c._passed = true; completed++; }
+    });
+  })).then(render);
+}
+
+// Run checklist after short delay to let other init run first
+setTimeout(runSetupChecklist, 500);
+
+// =====================================================
+// MY iNFTs
+// =====================================================
+let walletINFTs = [];
+
+function showINFTsSection(visible) {
+  var section = document.getElementById('infts-section');
+  if (section) section.style.display = visible ? 'block' : 'none';
+}
+
+async function loadWalletINFTs() {
+  if (typeof PocViem === 'undefined') {
+    // Module not ready yet — retry after a short delay
+    setTimeout(loadWalletINFTs, 500);
+    return;
+  }
+
+  var state = PocViem.getWalletState();
+  if (!state.connected || !state.address) {
+    showINFTsSection(false);
+    return;
+  }
+
+  showINFTsSection(true);
+  var content = document.getElementById('infts-content');
+  if (!content) return;
+  content.innerHTML = '<div class="infts-loading"><div class="spinner"></div>Fetching iNFTs from chain...</div>';
+
+  try {
+    var network = detectCurrentNetwork();
+    PocViem.init(network);
+    walletINFTs = await PocViem.getWalletINFTs(state.address, network);
+    renderINFTs(walletINFTs);
+  } catch (e) {
+    console.error('Failed to load wallet iNFTs:', e);
+    content.innerHTML = '<div class="infts-error">Failed to load iNFTs: ' + esc(e.message) + '</div>';
+  }
+}
+
+function detectCurrentNetwork() {
+  // Check what chain the wallet is connected to
+  if (window.ethereum && window.ethereum.chainId) {
+    var cid = parseInt(window.ethereum.chainId, 16);
+    if (cid === 16602) return 'og_testnet';
+    if (cid === 16661) return 'og_mainnet';
+    if (cid === 11155111) return 'sepolia';
+  }
+  return 'sepolia';
+}
+
+function renderINFTs(infts) {
+  var content = document.getElementById('infts-content');
+  var countEl = document.getElementById('infts-count');
+  countEl.textContent = infts.length;
+
+  if (infts.length === 0) {
+    content.innerHTML = '<div class="infts-empty">No iNFTs found in this wallet. <a href="agents.html" style="color:var(--cyan);">Mint your first agent</a></div>';
+    return;
+  }
+
+  var html = '<div class="infts-grid">';
+  for (var i = 0; i < infts.length; i++) {
+    var nft = infts[i];
+    var ensDisplay = nft.ensName || 'unnamed';
+    var nameDisplay = ensDisplay.split('.')[0] || 'Agent #' + nft.tokenId;
+    var mintDate = new Date(nft.mintedAt);
+    var mintStr = mintDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    var policyShort = nft.policyHash ? (nft.policyHash.slice(0, 6) + '...' + nft.policyHash.slice(-4)) : '---';
+    var agentIdShort = nft.agentId ? (nft.agentId.slice(0, 6) + '...' + nft.agentId.slice(-4)) : '---';
+
+    html += '<div class="inft-card" onclick="navigateToINFT(\'' + esc(nameDisplay) + '\')">' +
+      '<div class="inft-card-top">' +
+        '<div class="inft-avatar">' + getAgentIcon(nameDisplay) + '</div>' +
+        '<div class="inft-card-info">' +
+          '<div class="inft-card-name">' + esc(nameDisplay) + '</div>' +
+          '<div class="inft-card-ens">' + esc(ensDisplay) + '</div>' +
+        '</div>' +
+        '<div class="inft-status-dot ' + (nft.active ? 'active' : 'inactive') + '" title="' + (nft.active ? 'Active' : 'Inactive') + '"></div>' +
+      '</div>' +
+      '<div class="inft-card-details">' +
+        '<span class="inft-detail-label">Token ID</span>' +
+        '<span class="inft-detail-value">#' + esc(nft.tokenId) + '</span>' +
+        '<span class="inft-detail-label">Reputation</span>' +
+        '<span class="inft-detail-value">' + esc(nft.reputationScore) + '</span>' +
+        '<span class="inft-detail-label">Proofs</span>' +
+        '<span class="inft-detail-value">' + esc(nft.totalProofs) + '</span>' +
+        '<span class="inft-detail-label">Minted</span>' +
+        '<span class="inft-detail-value">' + esc(mintStr) + '</span>' +
+        '<span class="inft-detail-label">Policy</span>' +
+        '<span class="inft-detail-value hash">' + esc(policyShort) + '</span>' +
+        '<span class="inft-detail-label">Agent ID</span>' +
+        '<span class="inft-detail-value hash">' + esc(agentIdShort) + '</span>' +
+      '</div>' +
+    '</div>';
+  }
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+function getAgentIcon(name) {
+  var n = name.toLowerCase();
+  if (n.includes('defi') || n.includes('yield') || n.includes('swap')) return '\u{1F4B0}';
+  if (n.includes('sec') || n.includes('audit') || n.includes('guard')) return '\u{1F6E1}';
+  if (n.includes('gov') || n.includes('dao') || n.includes('vote')) return '\u{1F3DB}';
+  if (n.includes('data') || n.includes('oracle') || n.includes('analytics')) return '\u{1F4CA}';
+  if (n.includes('msg') || n.includes('chat') || n.includes('comms')) return '\u{1F4E8}';
+  return '\u{2726}';
+}
+
+function navigateToINFT(agentName) {
+  // Try to find matching agent in local state, otherwise go to agents page
+  var match = agents.find(function(a) { return a.name === agentName || a.id === agentName; });
+  if (match) {
+    window.location.href = 'dashboard.html?agent=' + encodeURIComponent(match.id);
+  } else {
+    window.location.href = 'agents.html';
+  }
+}
+
+// Watch for wallet connection and auto-load iNFTs
+// Poll until wallet display becomes visible (set by wallet.js on connect)
+var _inftWalletPoll = setInterval(function() {
+  var display = document.getElementById('wallet-display');
+  if (display && display.style.display === 'flex') {
+    clearInterval(_inftWalletPoll);
+    loadWalletINFTs();
+  }
+}, 800);
+
+// Also listen for account changes
+if (window.ethereum) {
+  window.ethereum.on('accountsChanged', function(accounts) {
+    if (accounts.length > 0) {
+      setTimeout(loadWalletINFTs, 500);
+    } else {
+      showINFTsSection(false);
+    }
+  });
+}
+
+// =====================================================
+// BOOT
+// =====================================================
+init();
+</script>
+</body>
+</html>

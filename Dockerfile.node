@@ -1,0 +1,20 @@
+# Shared Dockerfile for ProofOfClaw Node.js services
+# Build context should be set to the individual service directory.
+
+FROM node:20-alpine
+
+# Add tini for proper PID 1 signal handling
+RUN apk add --no-cache tini curl
+
+WORKDIR /app
+
+# Install dependencies first (layer caching)
+COPY package*.json ./
+RUN npm ci --production --ignore-scripts 2>/dev/null || npm install --production --ignore-scripts
+
+# Copy application source
+COPY . .
+
+# Default command — override per-service via docker-compose
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "server.js"]

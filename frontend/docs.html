@@ -1,0 +1,2249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), bluetooth=(), hid=(), usb=(), serial=(), speech-synthesis=(), speech-recognition=()">
+<title>Documentation — Proof of Claw</title>
+<link rel="icon" type="image/x-icon" href="public/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="public/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="public/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="public/apple-touch-icon.png">
+<meta name="description" content="Technical documentation for Proof of Claw — Provable Private Agent Framework. Architecture, integration guides, API reference, and deployment.">
+<meta property="og:title" content="Documentation — Proof of Claw">
+<meta property="og:description" content="Technical documentation for Proof of Claw — Provable Private Agent Framework.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* Mobile menu toggle (docs-specific, supplements shared.css) */
+.nav-hamburger {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.nav-hamburger:hover { border-color: var(--cyan); color: var(--cyan); }
+
+/* ========== HERO ========== */
+.docs-hero {
+  padding: 8rem 2rem 3rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(0, 229, 255, 0.03) 0%, transparent 70%);
+}
+
+.docs-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.docs-hero h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 3rem;
+  letter-spacing: -0.04em;
+  margin-bottom: 0.75rem;
+  position: relative;
+}
+
+.docs-hero .subtitle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 300;
+  max-width: 560px;
+  margin: 0 auto 2rem;
+  line-height: 1.7;
+}
+
+.docs-hero .hero-tags {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Search box */
+.docs-search-wrap {
+  max-width: 480px;
+  margin: 0 auto 1.5rem;
+  position: relative;
+}
+
+.docs-search {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.docs-search:focus {
+  outline: none;
+  border-color: var(--border-cyan);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.08);
+}
+
+.docs-search::placeholder { color: var(--text-dim); }
+
+.docs-search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+/* ========== LAYOUT ========== */
+.docs-wrapper {
+  display: grid;
+  grid-template-columns: var(--sidebar-width, 280px) 1fr;
+  gap: 0;
+  min-height: 100vh;
+  transition: grid-template-columns 0.3s ease;
+}
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  width: var(--sidebar-width, 280px);
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-right: 1px solid var(--border);
+  background: var(--bg-secondary);
+  padding: 1.5rem;
+  z-index: 50;
+  transition: width 0.3s ease, padding 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 56px;
+  padding: 1rem 0.5rem;
+}
+
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--text-dim); border-radius: 2px; }
+
+/* Collapse toggle */
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-bottom: 1rem;
+  margin-left: auto;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+}
+
+.sidebar-toggle:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: var(--cyan-glow);
+}
+
+.sidebar.collapsed .sidebar-toggle {
+  margin: 0 auto 1rem;
+}
+
+.sidebar-section { margin-bottom: 1.75rem; }
+
+.sidebar-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--cyan-dim);
+  margin-bottom: 0.6rem;
+  padding-left: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.2s;
+}
+
+.sidebar.collapsed .sidebar-label {
+  opacity: 0;
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+.sidebar-label::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--cyan-dim);
+  flex-shrink: 0;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  margin: 0.1rem 0;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-link .link-icon {
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  font-size: 0.75rem;
+}
+
+.sidebar-link .link-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 0.2s, width 0.3s;
+}
+
+.sidebar.collapsed .sidebar-link {
+  padding: 0.5rem;
+  justify-content: center;
+  border-left: none;
+}
+
+.sidebar.collapsed .sidebar-link .link-text {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+}
+
+.sidebar.collapsed .sidebar-divider { margin: 0.5rem 0; }
+
+.sidebar-link:hover {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.04);
+  border-left-color: rgba(255,255,255,0.1);
+}
+
+.sidebar.collapsed .sidebar-link:hover { border-left-color: transparent; }
+
+.sidebar-link.active {
+  color: var(--cyan);
+  background: var(--cyan-glow);
+  border-left-color: var(--cyan);
+}
+
+.sidebar.collapsed .sidebar-link.active { border-left-color: transparent; }
+
+/* Tooltip on collapsed hover */
+.sidebar.collapsed .sidebar-link {
+  position: relative;
+}
+
+.sidebar.collapsed .sidebar-link:hover::after {
+  content: attr(data-title);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+  padding: 0.35rem 0.65rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 1rem 0;
+}
+
+/* ========== MAIN CONTENT ========== */
+.docs-content {
+  padding: 0 4rem 6rem;
+  max-width: 920px;
+  transition: margin-left 0.3s ease;
+}
+
+/* ========== COLLAPSIBLE SECTIONS ========== */
+.doc-section {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+
+.doc-section:last-child { border-bottom: none; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 2rem 0 1rem;
+  user-select: none;
+}
+
+.section-header:hover .section-chevron { color: var(--cyan); }
+
+.section-chevron {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  transition: transform 0.3s ease, color 0.2s;
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
+.doc-section.collapsed .section-chevron {
+  transform: rotate(-90deg);
+}
+
+.section-body {
+  max-height: 10000px;
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.3s ease;
+  opacity: 1;
+}
+
+.doc-section.collapsed .section-body {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+/* Expand/collapse all controls */
+.section-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  justify-content: flex-end;
+}
+
+.section-controls button {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.section-controls button:hover {
+  border-color: var(--border-cyan);
+  color: var(--cyan);
+  background: var(--cyan-glow);
+}
+
+/* Section anchors */
+.section-anchor {
+  scroll-margin-top: 80px;
+}
+
+.docs-content h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin: 3.5rem 0 1.25rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--border);
+  letter-spacing: -0.02em;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.docs-content h2:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+
+.docs-content h2 .section-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.icon-cyan { background: var(--cyan-glow); border: 1px solid var(--border-cyan); }
+.icon-amber { background: var(--amber-glow); border: 1px solid rgba(255,179,0,0.2); }
+.icon-green { background: rgba(0,230,118,0.08); border: 1px solid rgba(0,230,118,0.2); }
+.icon-red { background: rgba(255,61,90,0.08); border: 1px solid rgba(255,61,90,0.2); }
+
+.docs-content h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 2rem 0 0.75rem;
+  color: var(--text-primary);
+}
+
+.docs-content p {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.8;
+  margin-bottom: 1.25rem;
+  font-weight: 300;
+}
+
+.docs-content ul, .docs-content ol {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.8;
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.docs-content li { margin-bottom: 0.4rem; }
+
+.docs-content code {
+  background: rgba(0, 229, 255, 0.08);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: var(--cyan);
+}
+
+/* ========== CODE BLOCKS ========== */
+.code-block {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 1.25rem 0 2rem;
+  transition: border-color 0.3s;
+}
+
+.code-block:hover { border-color: rgba(255,255,255,0.1); }
+
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--border);
+}
+
+.code-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.code-dots { display: flex; gap: 5px; }
+.code-dots span { width: 8px; height: 8px; border-radius: 50%; }
+.code-dots span:nth-child(1) { background: var(--red); opacity: 0.6; }
+.code-dots span:nth-child(2) { background: var(--amber); opacity: 0.6; }
+.code-dots span:nth-child(3) { background: var(--green); opacity: 0.6; }
+
+.code-filename {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  letter-spacing: 0.03em;
+}
+
+.copy-btn {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.copy-btn:hover { color: var(--cyan); border-color: var(--border-cyan); background: var(--cyan-glow); }
+.copy-btn.copied { color: var(--green); border-color: rgba(0,230,118,0.3); background: rgba(0,230,118,0.08); }
+
+.code-body {
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+}
+
+.code-body pre {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.code-body .kw { color: var(--cyan); }
+.code-body .fn { color: var(--amber); }
+.code-body .ty { color: var(--green); }
+.code-body .str { color: #f48fb1; }
+.code-body .cm { color: var(--text-dim); font-style: italic; }
+.code-body .op { color: var(--text-dim); }
+
+/* ========== TAGS ========== */
+.tag {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 100px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-right: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.tag-cyan { background: var(--cyan-glow); color: var(--cyan); border: 1px solid rgba(0,229,255,0.2); }
+.tag-amber { background: var(--amber-glow); color: var(--amber); border: 1px solid rgba(255,179,0,0.2); }
+.tag-green { background: rgba(0,230,118,0.08); color: var(--green); border: 1px solid rgba(0,230,118,0.2); }
+
+/* ========== INFO BOXES ========== */
+.info-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-cyan);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin: 1.5rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.info-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--cyan);
+  border-radius: 0 2px 2px 0;
+}
+
+.info-box p { margin-bottom: 0; }
+
+/* ========== INTEGRATION CARDS ========== */
+.integration-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 2rem;
+  margin: 2rem 0;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.integration-card:hover {
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 4px 40px rgba(0,0,0,0.3);
+}
+
+.integration-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.4;
+  filter: blur(60px);
+}
+
+.integration-card.card-cyan::after { background: rgba(0,229,255,0.08); }
+.integration-card.card-green::after { background: rgba(0,230,118,0.08); }
+.integration-card.card-amber::after { background: rgba(255,179,0,0.08); }
+
+.integration-card .card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.integration-card .card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+/* ========== TABLES ========== */
+.table-wrap { overflow-x: auto; margin: 1.5rem 0; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-cyan);
+  color: var(--cyan);
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: rgba(0, 229, 255, 0.03);
+}
+
+td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+tr:hover td { background: rgba(255,255,255,0.015); }
+
+.highlight { color: var(--cyan); }
+
+/* ========== FLOW DIAGRAMS ========== */
+.flow-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 1.5rem 0 2rem;
+}
+
+.flow-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  position: relative;
+  padding: 0.75rem 0;
+}
+
+.flow-step::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 38px;
+  bottom: -6px;
+  width: 1px;
+  background: var(--border);
+}
+
+.flow-step:last-child::before { display: none; }
+
+.flow-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-cyan);
+  color: var(--cyan);
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.flow-step.flow-highlight .flow-num {
+  background: var(--cyan-glow);
+  border-color: var(--cyan);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+}
+
+.flow-text {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  padding-top: 0.3rem;
+}
+
+/* ========== BOUNTY CARDS ========== */
+.bounty-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin: 2rem 0;
+}
+
+.bounty-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.bounty-card:hover {
+  border-color: rgba(255,255,255,0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+
+.bounty-sponsor {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.bounty-track {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.bounty-prize {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--amber);
+  margin-bottom: 0.75rem;
+}
+
+.bounty-integration {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+/* ========== FOOTER ========== */
+.docs-footer {
+  margin-top: 5rem;
+  padding: 3rem 0;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  position: relative;
+}
+
+.docs-footer::before {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.footer-logo {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.footer-text {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  margin-bottom: 0.3rem;
+}
+
+.footer-stack {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.footer-stack span {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+/* ========== STATUS BADGES ========== */
+.status-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: border-color 0.2s;
+}
+
+.status-row:hover { border-color: rgba(255,255,255,0.1); }
+
+.status-badge {
+  flex-shrink: 0;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.status-badge.working { background: rgba(0,230,118,0.12); color: var(--green); border: 1px solid rgba(0,230,118,0.25); }
+.status-badge.partial { background: var(--amber-glow); color: var(--amber); border: 1px solid rgba(255,179,0,0.25); }
+.status-badge.stub { background: rgba(255,61,90,0.1); color: var(--red); border: 1px solid rgba(255,61,90,0.2); }
+.status-badge.missing { background: rgba(255,61,90,0.1); color: var(--red); border: 1px solid rgba(255,61,90,0.2); }
+
+.status-name {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  min-width: 180px;
+}
+
+.status-detail {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.todo-list {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+}
+
+.todo-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.todo-list li:last-child { border-bottom: none; }
+
+.todo-priority {
+  flex-shrink: 0;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.15rem;
+}
+
+.todo-priority.high { background: rgba(255,61,90,0.1); color: var(--red); }
+.todo-priority.medium { background: var(--amber-glow); color: var(--amber); }
+.todo-priority.nice { background: rgba(0,230,118,0.08); color: var(--green); }
+
+@media (max-width: 900px) {
+  .status-row { flex-wrap: wrap; }
+  .status-name { min-width: auto; }
+}
+
+/* ========== ANIMATIONS ========== */
+.fade-in {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1100px) {
+  .docs-content { padding: 0 2.5rem 4rem; }
+}
+
+@media (max-width: 900px) {
+  .nav-links, .nav-actions { display: none; }
+  .nav-hamburger { display: flex; }
+  .nav-links.open, .nav-actions.open { display: flex; }
+
+  .docs-wrapper { grid-template-columns: 1fr !important; }
+  .sidebar {
+    display: none;
+    width: 100% !important;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    height: calc(100vh - 60px);
+    z-index: 90;
+    padding: 1.5rem !important;
+  }
+  .sidebar.open { display: block; }
+  .sidebar .sidebar-toggle { display: none; }
+  .sidebar.collapsed .sidebar-label { opacity: 1; height: auto; margin-bottom: 0.6rem; }
+  .sidebar.collapsed .sidebar-link .link-text { opacity: 1; width: auto; }
+  .sidebar.collapsed .sidebar-link { justify-content: flex-start; padding: 0.45rem 0.75rem; }
+  .docs-content { margin-left: 0 !important; padding: 0 1.5rem 4rem; }
+  .docs-hero { padding: 7rem 1.5rem 2rem; }
+  .docs-hero h1 { font-size: 2rem; }
+  .bounty-grid { grid-template-columns: 1fr; }
+
+  .mobile-nav-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    top: 60px;
+    background: rgba(6,8,13,0.8);
+    z-index: 89;
+  }
+  .mobile-nav-overlay.open { display: block; }
+}
+
+@media (max-width: 600px) {
+  .docs-hero h1 { font-size: 1.6rem; }
+  .docs-hero { padding: 6rem 1rem 1.5rem; }
+  .docs-hero .subtitle { font-size: 0.8rem; }
+  .docs-hero .hero-tags { gap: 0.3rem; }
+  .docs-content { padding: 0 1rem 3rem; }
+  .flow-step { gap: 0.6rem; }
+  .landing-nav { padding: 0.75rem 1rem; }
+  .nav-title { font-size: 0.9rem; }
+  .section-card { padding: 1.5rem 1rem; }
+  pre { font-size: 0.7rem; padding: 1rem; overflow-x: auto; }
+}
+</style>
+</head>
+<body>
+<a href="#overview" class="skip-link">Skip to documentation</a>
+
+<!-- NAV -->
+<nav class="landing-nav" role="navigation" aria-label="Main navigation">
+  <a href="index.html" class="nav-logo">
+    <img src="public/logoproofofclaw.png" alt="Proof of Claw" class="claw-icon" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 0 8px var(--cyan));">
+    <span class="nav-title">Proof of Claw</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="docs.html" class="active">Docs</a></li>
+    <li><a href="auth-modules.html">Auth</a></li>
+    <li><a href="agents.html">Agents</a></li>
+    <li><a href="dashboard.html">Dashboard</a></li>
+    <li><a href="messages.html">Messages</a></li>
+    <li><a href="proofs.html">Proofs</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="agents.html" class="nav-badge">Launch App</a>
+  </div>
+  <button class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menu" aria-expanded="false">&#9776;</button>
+</nav>
+
+<!-- HERO -->
+<div class="docs-hero">
+  <h1>Proof of <span class="highlight">Claw</span> Documentation</h1>
+  <p class="subtitle">Architecture, integration guides, API reference, and deployment for the Provable Private Agent Framework.</p>
+  <div class="docs-search-wrap">
+    <span class="docs-search-icon">&#x2315;</span>
+    <label for="docsSearch" class="sr-only">Search documentation</label>
+    <input type="text" class="docs-search" placeholder="Search documentation..." id="docsSearch" aria-label="Documentation search">
+  </div>
+  <div class="hero-tags">
+    <span class="tag tag-cyan">Rust</span>
+    <span class="tag tag-cyan">0G</span>
+    <span class="tag tag-green">ENS</span>
+    <span class="tag tag-green">DM3</span>
+    <span class="tag tag-green">RISC Zero</span>
+    <span class="tag tag-amber">Ledger</span>
+
+  </div>
+</div>
+
+<div class="docs-wrapper">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar" role="navigation" aria-label="Documentation sections">
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar" title="Collapse sidebar">&#x2039;</button>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Getting Started</div>
+    <a href="#overview" class="sidebar-link active" data-title="Overview"><span class="link-icon">&#x2726;</span><span class="link-text">Overview</span></a>
+    <a href="#quick-start" class="sidebar-link" data-title="Quick Start"><span class="link-icon">&#x25B6;</span><span class="link-text">Quick Start</span></a>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Architecture</div>
+    <a href="#architecture" class="sidebar-link" data-title="System Design"><span class="link-icon">&#x2B22;</span><span class="link-text">System Design</span></a>
+    <a href="#data-flow" class="sidebar-link" data-title="Data Flow"><span class="link-icon">&#x21C6;</span><span class="link-text">Data Flow</span></a>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Integrations</div>
+    <a href="#0g-network" class="sidebar-link" data-title="0G Network"><span class="link-icon">&#x25C9;</span><span class="link-text">0G Network</span></a>
+    <a href="#ens-dm3" class="sidebar-link" data-title="ENS + DM3"><span class="link-icon">&#x2709;</span><span class="link-text">ENS + DM3</span></a>
+    <a href="#risc-zero" class="sidebar-link" data-title="RISC Zero"><span class="link-icon">&#x2731;</span><span class="link-text">RISC Zero</span></a>
+    <a href="#ledger" class="sidebar-link" data-title="Ledger DMK"><span class="link-icon">&#x26BF;</span><span class="link-text">Ledger DMK</span></a>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Smart Contracts</div>
+    <a href="#contracts" class="sidebar-link" data-title="Contracts"><span class="link-icon">&#x2B22;</span><span class="link-text">ProofOfClawVerifier</span></a>
+    <a href="#clear-signing" class="sidebar-link" data-title="Clear Signing"><span class="link-icon">&#x270D;</span><span class="link-text">Clear Signing (7730)</span></a>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Security</div>
+    <a href="#security" class="sidebar-link" data-title="Threat Model"><span class="link-icon">&#x26A0;</span><span class="link-text">Threat Model</span></a>
+    <a href="#safety-layer" class="sidebar-link" data-title="Safety Layer"><span class="link-icon">&#x1F6E1;</span><span class="link-text">Safety Layer</span></a>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Reference</div>
+    <a href="#agent-api-spec" class="sidebar-link" data-title="API Spec"><span class="link-icon">&#x2B23;</span><span class="link-text">Agent API Spec</span></a>
+    <a href="#config" class="sidebar-link" data-title="Configuration"><span class="link-icon">&#x2699;</span><span class="link-text">Configuration</span></a>
+    <a href="#repo-structure" class="sidebar-link" data-title="Repo Structure"><span class="link-icon">&#x2302;</span><span class="link-text">Repository Structure</span></a>
+    <a href="#bounties" class="sidebar-link" data-title="Bounties"><span class="link-icon">&#x2605;</span><span class="link-text">Target Bounties</span></a>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Status</div>
+    <a href="#status" class="sidebar-link" data-title="Working"><span class="link-icon">&#x2714;</span><span class="link-text">What's Working</span></a>
+    <a href="#incomplete" class="sidebar-link" data-title="Incomplete"><span class="link-icon">&#x26A0;</span><span class="link-text">What's Incomplete</span></a>
+  </div>
+</aside>
+
+<div class="mobile-nav-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+
+<!-- MAIN CONTENT -->
+<main class="docs-content" role="main">
+<div class="section-controls">
+  <button onclick="expandAllSections()">Expand All</button>
+  <button onclick="collapseAllSections()">Collapse All</button>
+</div>
+
+<!-- OVERVIEW -->
+<h2 id="overview" class="section-anchor fade-in"><span class="section-icon icon-cyan">&#x2726;</span> Overview</h2>
+<p class="fade-in">
+  Proof of Claw is a framework for running autonomous AI agents whose behavior is cryptographically provable, whose communication is end-to-end encrypted, and whose high-value actions require human approval via hardware signing.
+</p>
+<p class="fade-in">An agent built with Proof of Claw can:</p>
+<ul class="fade-in">
+  <li>Reason privately using decentralized inference (<strong>0G Compute</strong>)</li>
+  <li>Store persistent memory and execution traces on decentralized storage (<strong>0G Storage</strong>)</li>
+  <li>Discover and message other agents via ENS-resolved encrypted channels (<strong>DM3</strong>)</li>
+  <li>Prove to any on-chain verifier that it followed its declared policy (<strong>RISC Zero zkVM</strong>)</li>
+  <li>Route high-value or out-of-policy actions to its owner's Ledger device for physical approval (<strong>Ledger DMK + Clear Signing</strong>)</li>
+</ul>
+<p class="fade-in">
+  The core agent runtime is adapted from <strong>IronClaw</strong>, a Rust-based OpenClaw reimplementation with WASM-sandboxed tool execution, capability-based permissions, and defense-in-depth security.
+</p>
+
+<div class="info-box fade-in">
+  <p><strong>Tech Stack:</strong> Rust &middot; Tokio &middot; Wasmtime &middot; 0G Compute &middot; 0G Storage &middot; ENS &middot; DM3 &middot; RISC Zero &middot; Boundless &middot; Ledger DMK/DSK &middot; Solidity (Foundry)</p>
+</div>
+
+<!-- QUICK START -->
+<h2 id="quick-start" class="section-anchor fade-in"><span class="section-icon icon-green">&#x25B6;</span> Quick Start</h2>
+
+<h3 id="prerequisites" class="section-anchor fade-in">Prerequisites</h3>
+<ul class="fade-in">
+  <li>Rust 1.75+</li>
+  <li>Foundry (forge, cast)</li>
+  <li>RISC Zero toolchain</li>
+  <li>Node.js 18+ (for web UI, optional)</li>
+</ul>
+
+<h3 class="fade-in">1. Build the Agent Runtime</h3>
+<div class="code-block fade-in">
+  <div class="code-header">
+    <div class="code-header-left">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <div class="code-filename">terminal</div>
+    </div>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <div class="code-body">
+<pre><span class="cm"># Build the Rust agent runtime</span>
+<span class="kw">cd</span> agent
+<span class="fn">cargo</span> build --release</pre>
+  </div>
+</div>
+
+<h3 class="fade-in">2. Build RISC Zero Programs</h3>
+<div class="code-block fade-in">
+  <div class="code-header">
+    <div class="code-header-left">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <div class="code-filename">terminal</div>
+    </div>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <div class="code-body">
+<pre><span class="cm"># Compile zkVM guest and host programs</span>
+<span class="kw">cd</span> zkvm
+<span class="fn">cargo</span> build --release</pre>
+  </div>
+</div>
+
+<h3 class="fade-in">3. Deploy Smart Contracts</h3>
+<div class="code-block fade-in">
+  <div class="code-header">
+    <div class="code-header-left">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <div class="code-filename">terminal</div>
+    </div>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <div class="code-body">
+<pre><span class="kw">cd</span> contracts
+<span class="fn">forge</span> build
+<span class="fn">forge</span> script script/Deploy.s.sol --rpc-url $RPC_URL --broadcast</pre>
+  </div>
+</div>
+
+<h3 class="fade-in">4. Run the Agent</h3>
+<div class="code-block fade-in">
+  <div class="code-header">
+    <div class="code-header-left">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <div class="code-filename">terminal</div>
+    </div>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <div class="code-body">
+<pre><span class="kw">cd</span> agent
+<span class="fn">cargo</span> run</pre>
+  </div>
+</div>
+
+<!-- ARCHITECTURE -->
+<h2 id="architecture" class="section-anchor fade-in"><span class="section-icon icon-cyan">&#x2B22;</span> Architecture</h2>
+<p class="fade-in">
+  A layered design separating agent reasoning, integration services, and on-chain verification. Each layer assumes the layer below it may be compromised.
+</p>
+
+<h3 id="agent-core" class="section-anchor fade-in">Agent Core &mdash; IronClaw Runtime</h3>
+<p class="fade-in">The core agent is written in Rust and consists of three primary subsystems:</p>
+<div class="table-wrap fade-in">
+<table>
+  <thead>
+    <tr><th>Component</th><th>Path</th><th>Responsibility</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Agent Loop</td><td><code>agent/src/core/agent.rs</code></td><td>Main event loop, message handling, intent routing, job coordination</td></tr>
+    <tr><td>Intent Router</td><td><code>agent/src/core/intent_router.rs</code></td><td>Classifies incoming messages into actionable intents</td></tr>
+    <tr><td>Job Scheduler</td><td><code>agent/src/core/job_scheduler.rs</code></td><td>Manages asynchronous task execution</td></tr>
+    <tr><td>Tool Registry</td><td><code>agent/src/tools/registry.rs</code></td><td>Available tools and their metadata</td></tr>
+    <tr><td>WASM Sandbox</td><td><code>agent/src/tools/sandbox.rs</code></td><td>Isolated execution environment for untrusted tools</td></tr>
+    <tr><td>Capabilities</td><td><code>agent/src/tools/capabilities.rs</code></td><td>Permission and rate limit enforcement</td></tr>
+    <tr><td>Policy Engine</td><td><code>agent/src/safety/policy_engine.rs</code></td><td>Enforces declared agent policy rules</td></tr>
+    <tr><td>Content Sanitizer</td><td><code>agent/src/safety/sanitizer.rs</code></td><td>Removes malicious content from inputs/outputs</td></tr>
+    <tr><td>Injection Detector</td><td><code>agent/src/safety/injection_detector.rs</code></td><td>Detects prompt injection attempts</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3 id="trust-tiers" class="section-anchor fade-in">Two-Tier Trust Model</h3>
+<div class="table-wrap fade-in">
+<table>
+  <thead>
+    <tr><th>Tier</th><th>Condition</th><th>Signing</th><th>Verification</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="tag tag-cyan">Autonomous</span></td>
+      <td>Action value &lt; threshold</td>
+      <td>Agent server wallet</td>
+      <td>RISC Zero proof on-chain</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-amber">Ledger-Gated</span></td>
+      <td>Value &ge; threshold or escalation</td>
+      <td>Owner's Ledger device</td>
+      <td>RISC Zero + Ledger approval</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3 id="data-flow" class="section-anchor fade-in">Data Flow</h3>
+
+<h3 class="fade-in">Autonomous Action Flow</h3>
+<div class="flow-steps fade-in">
+  <div class="flow-step"><div class="flow-num">1</div><div class="flow-text">Agent receives message (user or DM3)</div></div>
+  <div class="flow-step"><div class="flow-num">2</div><div class="flow-text">Intent router classifies action</div></div>
+  <div class="flow-step"><div class="flow-num">3</div><div class="flow-text">0G Compute performs private inference</div></div>
+  <div class="flow-step"><div class="flow-num">4</div><div class="flow-text">Safety layer validates against declared policy</div></div>
+  <div class="flow-step"><div class="flow-num">5</div><div class="flow-text">Tool execution in WASM sandbox</div></div>
+  <div class="flow-step"><div class="flow-num">6</div><div class="flow-text">Execution trace stored on 0G Storage</div></div>
+  <div class="flow-step"><div class="flow-num">7</div><div class="flow-text">RISC Zero proof generated via Boundless</div></div>
+  <div class="flow-step"><div class="flow-num">8</div><div class="flow-text">Agent wallet submits proof + action to verifier contract</div></div>
+  <div class="flow-step flow-highlight"><div class="flow-num">9</div><div class="flow-text">Contract verifies proof and executes action</div></div>
+</div>
+
+<h3 class="fade-in">Ledger-Gated Action Flow</h3>
+<div class="flow-steps fade-in">
+  <div class="flow-step"><div class="flow-num">1&ndash;7</div><div class="flow-text">Same as autonomous flow</div></div>
+  <div class="flow-step"><div class="flow-num">8</div><div class="flow-text">RISC Zero proof indicates approval required</div></div>
+  <div class="flow-step"><div class="flow-num">9</div><div class="flow-text">Contract emits <code>ApprovalRequired</code> event</div></div>
+  <div class="flow-step"><div class="flow-num">10</div><div class="flow-text">Web UI alerts owner</div></div>
+  <div class="flow-step"><div class="flow-num">11</div><div class="flow-text">Owner reviews on Ledger device (Clear Signing)</div></div>
+  <div class="flow-step"><div class="flow-num">12</div><div class="flow-text">Owner physically approves</div></div>
+  <div class="flow-step"><div class="flow-num">13</div><div class="flow-text">Ledger signs <code>approveAction()</code> transaction</div></div>
+  <div class="flow-step flow-highlight"><div class="flow-num">14</div><div class="flow-text">Contract executes action</div></div>
+</div>
+
+<!-- INTEGRATIONS -->
+<h2 id="0g-network" class="section-anchor fade-in"><span class="section-icon icon-cyan">&#x25C9;</span> 0G Network</h2>
+<div class="integration-card card-cyan fade-in">
+  <div class="card-header">
+    <div class="card-icon icon-cyan">&#x26A1;</div>
+    <div>
+      <span class="tag tag-cyan">0G Compute</span>
+      <span class="tag tag-cyan">0G Storage</span>
+    </div>
+  </div>
+  <p>
+    Every LLM call runs through 0G's Sealed Inference &mdash; prompts enter encrypted, operators cannot inspect them. Execution traces are stored on 0G Storage with content-addressable root hashes that anchor the provable chain.
+  </p>
+</div>
+
+<div class="code-block fade-in">
+  <div class="code-header">
+    <div class="code-header-left">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <div class="code-filename">integrations/0g_compute.ts &mdash; Sealed Inference</div>
+    </div>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <div class="code-body">
+<pre><span class="kw">import</span> { <span class="ty">createZGServingNetworkBroker</span> } <span class="kw">from</span> <span class="str">'@0glabs/0g-serving-broker'</span>;
+
+<span class="cm">// Initialize broker with agent's wallet</span>
+<span class="kw">const</span> broker <span class="op">=</span> <span class="kw">await</span> <span class="fn">createZGServingNetworkBroker</span>(wallet);
+<span class="kw">const</span> services <span class="op">=</span> <span class="kw">await</span> broker.inference.<span class="fn">listService</span>();
+<span class="kw">const</span> provider <span class="op">=</span> services.<span class="fn">find</span>(s <span class="op">=></span> s.verifiability <span class="op">===</span> <span class="str">'TeeML'</span>);
+
+<span class="cm">// OpenAI-compatible call through 0G Compute</span>
+<span class="kw">const</span> headers <span class="op">=</span> <span class="kw">await</span> broker.inference.<span class="fn">getRequestHeaders</span>(provider.provider, prompt);
+<span class="kw">const</span> response <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">`${endpoint}/chat/completions`</span>, {
+  method: <span class="str">'POST'</span>,
+  headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>, ...headers },
+  body: <span class="ty">JSON</span>.<span class="fn">stringify</span>({ messages, model }),
+});
+
+<span class="cm">// Verify attestation</span>
+<span class="kw">const</span> verified <span class="op">=</span> <span class="kw">await</span> broker.inference.<span class="fn">verifyResponse</span>(response);</pre>
+  </div>
+</div>
+
+<h2 id="ens-dm3" class="section-anchor fade-in"><span class="section-icon icon-green">&#x2709;</span> ENS + DM3</h2>
+<div class="integration-card card-green fade-in">
+  <div class="card-header">
+    <div class="card-icon icon-green">&#x1F310;</div>
+    <div>
+      <span class="tag tag-green">ENS</span>
+      <span class="tag tag-green">DM3</span>
+    </div>
+  </div>
+  <p>
+    Agents register as ENS subnames (e.g. <code>alice-agent.proofofclaw.eth</code>) with text records storing DM3 profiles, policy hashes, and RISC Zero image IDs. Inter-agent communication is end-to-end encrypted via the DM3 protocol.
+  </p>
+</div>
+
+<div class="code-block fade-in">
+  <div class="code-header">
+    <div class="code-header-left">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <div class="code-filename">integrations/dm3_messaging.ts &mdash; E2E Encrypted Agent Chat</div>
+    </div>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <div class="code-body">
+<pre><span class="kw">import</span> { <span class="ty">createEnvelop</span> } <span class="kw">from</span> <span class="str">'@dm3-org/dm3-lib'</span>;
+
+<span class="cm">// Publish DM3 profile to ENS text record</span>
+<span class="kw">await</span> ensContract.<span class="fn">setText</span>(
+  <span class="fn">namehash</span>(<span class="str">'alice-agent.proofofclaw.eth'</span>),
+  <span class="str">'eth.dm3.profile'</span>,
+  <span class="fn">toDataURI</span>(deliveryServiceProfile)
+);
+
+<span class="cm">// Send encrypted message to another agent</span>
+<span class="kw">async function</span> <span class="fn">sendAgentMessage</span>(recipientEns, message) {
+  <span class="kw">const</span> recipientProfile <span class="op">=</span> <span class="kw">await</span> <span class="fn">resolveDm3Profile</span>(recipientEns);
+  <span class="kw">const</span> { encryptedEnvelope } <span class="op">=</span> <span class="kw">await</span> <span class="fn">createEnvelop</span>(
+    <span class="ty">JSON</span>.<span class="fn">stringify</span>(message),
+    keys.signingKey,
+    recipientProfile.publicEncryptionKey,
+    recipientProfile.deliveryServiceUrl
+  );
+  <span class="kw">await</span> <span class="fn">fetch</span>(recipientProfile.deliveryServiceUrl, {
+    method: <span class="str">'POST'</span>,
+    body: <span class="ty">JSON</span>.<span class="fn">stringify</span>(<span class="fn">createJsonRpcCallSubmitMessage</span>(encryptedEnvelope)),
+  });
+}</pre>
+  </div>
+</div>
+
+<h2 id="risc-zero" class="section-anchor fade-in"><span class="section-icon icon-green">&#x2731;</span> RISC Zero + Boundless</h2>
+<div class="integration-card card-green fade-in">
+  <div class="card-header">
+    <div class="card-icon icon-green">&#x2713;</div>
+    <div>
+      <span class="tag tag-green">RISC Zero</span>
+      <span class="tag tag-green">Boundless</span>
+    </div>
+  </div>
+  <p>
+    The execution trace &mdash; 0G attestation, tool invocations, safety checks &mdash; is fed into a RISC Zero zkVM guest program. Proof generation is outsourced to the Boundless decentralized prover network. The receipt lands on-chain for anyone to verify.
+  </p>
+</div>
+
+<div class="code-block fade-in">
+  <div class="code-header">
+    <div class="code-header-left">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <div class="code-filename">guest/src/main.rs &mdash; RISC Zero zkVM Guest</div>
+    </div>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <div class="code-body">
+<pre><span class="cm">// Runs inside RISC Zero zkVM &mdash; produces cryptographic receipt</span>
+<span class="kw">fn</span> <span class="fn">main</span>() {
+    <span class="kw">let</span> trace: <span class="ty">ExecutionTrace</span> <span class="op">=</span> risc0_zkvm::guest::env::<span class="fn">read</span>();
+    <span class="kw">let</span> policy: <span class="ty">AgentPolicy</span> <span class="op">=</span> risc0_zkvm::guest::env::<span class="fn">read</span>();
+
+    <span class="cm">// Verify every tool invocation against declared policy</span>
+    <span class="kw">let mut</span> all_passed <span class="op">=</span> <span class="kw">true</span>;
+    <span class="kw">for</span> invocation <span class="kw">in</span> &amp;trace.tool_invocations {
+        <span class="kw">if</span> !policy.allowed_tools.<span class="fn">contains</span>(&amp;invocation.tool_name) {
+            all_passed <span class="op">=</span> <span class="kw">false</span>;
+        }
+    }
+
+    <span class="cm">// Check if Ledger approval is required</span>
+    <span class="kw">let</span> requires_approval <span class="op">=</span> trace.<span class="fn">action_value</span>() &gt; policy.max_value_autonomous;
+
+    <span class="cm">// Public output &mdash; anyone can verify on-chain</span>
+    risc0_zkvm::guest::env::<span class="fn">commit</span>(&amp;<span class="ty">VerifiedOutput</span> {
+        agent_id: trace.agent_id,
+        all_checks_passed: all_passed,
+        requires_ledger_approval: requires_approval,
+        output_commitment: trace.output_commitment,
+    });
+}</pre>
+  </div>
+</div>
+
+<h2 id="ledger" class="section-anchor fade-in"><span class="section-icon icon-amber">&#x26BF;</span> Ledger DMK &mdash; Hardware Approval</h2>
+<div class="integration-card card-amber fade-in">
+  <div class="card-header">
+    <div class="card-icon icon-amber">&#x1F512;</div>
+    <div>
+      <span class="tag tag-amber">Ledger DMK</span>
+      <span class="tag tag-amber">Clear Signing</span>
+    </div>
+  </div>
+  <p>
+    High-value actions route to the owner's Ledger device via DMK/DSK. ERC-7730 Clear Signing metadata renders human-readable transaction details directly on the device &mdash; not raw hex.
+  </p>
+</div>
+
+<div class="code-block fade-in">
+  <div class="code-header">
+    <div class="code-header-left">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <div class="code-filename">integrations/ledger_approval.ts &mdash; Clear Signing</div>
+    </div>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <div class="code-body">
+<pre><span class="kw">import</span> { <span class="ty">DeviceManagementKitBuilder</span> } <span class="kw">from</span> <span class="str">'@ledgerhq/device-management-kit'</span>;
+<span class="kw">import</span> { <span class="ty">SignerEthBuilder</span> } <span class="kw">from</span> <span class="str">'@ledgerhq/device-signer-kit-ethereum'</span>;
+
+<span class="cm">// Initialize Ledger DMK + Ethereum signer</span>
+<span class="kw">const</span> dmk <span class="op">=</span> <span class="kw">new</span> <span class="ty">DeviceManagementKitBuilder</span>()
+  .<span class="fn">addTransport</span>(webHidTransportFactory).<span class="fn">build</span>();
+<span class="kw">const</span> sessionId <span class="op">=</span> <span class="kw">await</span> dmk.<span class="fn">connect</span>({ deviceId });
+<span class="kw">const</span> signerEth <span class="op">=</span> <span class="kw">new</span> <span class="ty">SignerEthBuilder</span>({ dmk, sessionId }).<span class="fn">build</span>();
+
+<span class="cm">// When agent action exceeds autonomous threshold:</span>
+<span class="kw">async function</span> <span class="fn">requestLedgerApproval</span>(action, proofReceipt) {
+  <span class="kw">const</span> signature <span class="op">=</span> <span class="kw">await</span> signerEth.<span class="fn">signTransaction</span>({
+    to: VERIFIER_ADDRESS,
+    data: <span class="fn">encodeApproveAction</span>(action.agentId, action.outputCommitment),
+  });
+  <span class="kw">return</span> signature;
+}</pre>
+  </div>
+</div>
+
+
+<!-- SMART CONTRACTS -->
+<h2 id="contracts" class="section-anchor fade-in"><span class="section-icon icon-amber">&#x2B22;</span> Smart Contracts</h2>
+
+<div class="info-box fade-in">
+  <strong>Deployed on 0G Galileo Testnet</strong> (Chain ID: 16602) &mdash; All contracts verified on <a href="https://chainscan-galileo.0g.ai/" target="_blank">chainscan-galileo.0g.ai</a>
+</div>
+
+<div class="table-wrap fade-in">
+<table>
+  <thead>
+    <tr><th>Contract</th><th>Address</th><th>Role</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>SoulVaultSwarm</strong></td><td><code>0xa70EB0DF1563708F28285C2DeA2BF31aadFB544D</code></td><td>Epoch-based swarm coordination</td></tr>
+    <tr><td><strong>ERC8004RegistryAdapter</strong></td><td><code>0x9De4F1b14660B5f8145a78Cfc0312B1BFb812C46</code></td><td>Self-sovereign agent identity</td></tr>
+    <tr><td><strong>RiscZeroGroth16Verifier</strong></td><td><code>0x93e985aCA4112771c0B05114Ad99677DB85a6A9e</code></td><td>Groth16 proof verifier</td></tr>
+    <tr><td><strong>ProofOfClawVerifier</strong></td><td><code>0xa2Df3F3998FdF9Fb7E11e43d10d6B3C62264e3A4</code></td><td>RISC Zero proof verification + routing</td></tr>
+    <tr><td><strong>ProofOfClawINFT</strong></td><td><code>0xDe61e80Cdc7ba0000d9eB9040e59f98A3C9991a3</code></td><td>ERC-7857 agent identity NFT</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3 class="fade-in">ProofOfClawVerifier</h3>
+<p class="fade-in">The on-chain verifier contract handles:</p>
+<ul class="fade-in">
+  <li>Agent registration with policy commitment (policy hash)</li>
+  <li>RISC Zero proof verification via the on-chain verifier</li>
+  <li>Autonomous vs Ledger-gated execution routing</li>
+  <li>Action execution with on-chain enforcement</li>
+</ul>
+
+<h3 class="fade-in">SoulVaultSwarm</h3>
+<p class="fade-in">Epoch-based coordination for AI agent swarms:</p>
+<ul class="fade-in">
+  <li>Swarm membership with join request/approval flow</li>
+  <li>Epoch-based key rotation with optimistic concurrency</li>
+  <li>On-chain agent file mappings and manifests</li>
+  <li>Inter-agent messaging with sequence numbers</li>
+</ul>
+
+<h3 class="fade-in">SoulVaultERC8004RegistryAdapter</h3>
+<p class="fade-in">Self-sovereign agent identity registry:</p>
+<ul class="fade-in">
+  <li>Self-registration (no admin gating) &mdash; agents register themselves</li>
+  <li>Maps agent IDs to wallet addresses and metadata</li>
+  <li>Reverse lookup: wallet to list of owned agents</li>
+</ul>
+
+<h3 id="clear-signing" class="section-anchor fade-in">Clear Signing (ERC-7730)</h3>
+<p class="fade-in">
+  ERC-7730 metadata stored at <code>contracts/clear-signing/proofofclaw.json</code> enables the Ledger device to render human-readable action descriptions instead of raw calldata. The owner sees exactly what the agent wants to do before physically approving.
+</p>
+
+<!-- SECURITY -->
+<h2 id="security" class="section-anchor fade-in"><span class="section-icon icon-red">&#x26A0;</span> Security &amp; Threat Model</h2>
+<p class="fade-in">Every layer assumes the layer below it is compromised.</p>
+
+<div class="table-wrap fade-in">
+<table>
+  <thead>
+    <tr><th>Threat</th><th>Mitigation</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Agent acts outside policy</td><td>RISC Zero proof fails; action blocked on-chain. No proof = no action.</td></tr>
+    <tr><td>Inference tampering</td><td>0G Compute attestation signs every response. Tampered data produces an invalid proof.</td></tr>
+    <tr><td>Message interception</td><td>DM3 end-to-end encryption with keys from ENS profiles. Delivery service never sees plaintext.</td></tr>
+    <tr><td>Identity spoofing</td><td>ENS ownership tied to Ledger EOA.</td></tr>
+    <tr><td>High-value action without consent</td><td>Physical Ledger approval required. Owner sees human-readable Clear Signing display.</td></tr>
+    <tr><td>Prompt injection</td><td>Safety layer runs in proven execution trace. Injection detector + content sanitizer.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3 id="safety-layer" class="section-anchor fade-in">Safety Layer</h3>
+<p class="fade-in">The safety subsystem provides defense-in-depth:</p>
+<ul class="fade-in">
+  <li><strong>Policy Engine</strong> &mdash; Enforces declared agent policy rules, validates tool invocations against allowlists</li>
+  <li><strong>Content Sanitizer</strong> &mdash; Strips potentially malicious content from inputs and outputs</li>
+  <li><strong>Injection Detector</strong> &mdash; Detects and blocks prompt injection attempts before they reach the LLM</li>
+  <li><strong>WASM Sandbox</strong> &mdash; Untrusted tools execute in isolated Wasmtime containers with capability-based permissions</li>
+</ul>
+
+<!-- AGENT API SPEC -->
+<h2 id="agent-api-spec" class="section-anchor fade-in"><span class="section-icon icon-green">&#x2B23;</span> Agent API Spec</h2>
+<p class="fade-in">Any agent that implements these endpoints can connect to Proof of Claw. Build your agent in Python, Node, Go, Rust, or any language.</p>
+
+<h3 class="fade-in" style="margin-top:24px;">Required Endpoints</h3>
+<p class="fade-in" style="font-size:13px;color:var(--text-secondary);">Your agent <strong>must</strong> implement these two endpoints to be connectable.</p>
+
+<div class="code-block fade-in">
+<div class="code-header"><span>GET /health</span></div>
+<pre><code>// Health check — return 200 OK
+// No body required. Used for liveness checks.
+
+curl http://localhost:8420/health
+// Response: 200 OK</code></pre>
+</div>
+
+<div class="code-block fade-in">
+<div class="code-header"><span>GET /api/status</span></div>
+<pre><code>// Returns agent identity, configuration, and statistics
+
+// Response shape:
+{
+  "agent_id": "my-agent",
+  "ens_name": "my-agent.proofofclaw.eth",
+  "status": "online",
+  "network": "sepolia",
+  "allowed_tools": ["swap_tokens", "transfer", "query"],
+  "endpoint_allowlist": ["https://api.uniswap.org"],
+  "max_value_autonomous_wei": "1000000000000000000",
+  "uptime_secs": 3600,
+  "stats": {
+    "total_actions": 42,
+    "proofs_generated": 15
+  }
+}</code></pre>
+</div>
+
+<h3 class="fade-in" style="margin-top:24px;">Chat Endpoint</h3>
+<p class="fade-in" style="font-size:13px;color:var(--text-secondary);">Required for the chat interface. This is where the agent processes user messages.</p>
+
+<div class="code-block fade-in">
+<div class="code-header"><span>POST /api/chat</span></div>
+<pre><code>// Request:
+{ "message": "swap 100 USDC for ETH" }
+
+// Response:
+{
+  "response": "Executing swap: 100 USDC for ETH. Policy verified.",
+  "intent": {
+    "action_type": "swap",       // "swap" | "transfer" | "query" | "unknown"
+    "confidence": 0.95
+  },
+  "policy_result": {
+    "allowed": true,
+    "approval_type": "autonomous", // "autonomous" | "ledger_gated"
+    "checks": [
+      { "rule_id": "tool_allowlist", "severity": "Pass", "details": "swap_tokens allowed" },
+      { "rule_id": "value_threshold", "severity": "Pass", "details": "within limit" }
+    ]
+  },
+  "proof": {
+    "proof_id": "0xabcd...",
+    "status": "verified",
+    "output_commitment": "0x1234..."
+  }
+}</code></pre>
+</div>
+
+<h3 class="fade-in" style="margin-top:24px;">Optional Endpoints</h3>
+<p class="fade-in" style="font-size:13px;color:var(--text-secondary);">These enable full dashboard, proofs, and messaging integration.</p>
+
+<div class="code-block fade-in">
+<div class="code-header"><span>GET /api/activity</span></div>
+<pre><code>// Returns activity feed
+[
+  {
+    "id": "act-001",
+    "timestamp": 1712234567,
+    "type": "proof_generated",     // "proof_generated" | "message_received" | "policy_violation"
+    "title": "Swap executed autonomously",
+    "description": "Swapped 100 USDC for ETH",
+    "severity": "info"             // "info" | "warning" | "error"
+  }
+]</code></pre>
+</div>
+
+<div class="code-block fade-in">
+<div class="code-header"><span>GET /api/proofs</span></div>
+<pre><code>// Returns proof history
+[
+  {
+    "proof_id": "0xabcd...",
+    "timestamp": 1712234567,
+    "agent_id": "my-agent",
+    "action": "swap_tokens",
+    "status": "verified",
+    "output_commitment": "0x1234...",
+    "policy_checks": {
+      "tool_allowlist": "Pass",
+      "endpoint_restriction": "Pass",
+      "value_threshold": "Pass"
+    }
+  }
+]</code></pre>
+</div>
+
+<div class="code-block fade-in">
+<div class="code-header"><span>GET /api/messages &amp; POST /api/messages/send</span></div>
+<pre><code>// GET /api/messages — Returns message records
+[
+  {
+    "id": "msg-001",
+    "from": "my-agent",
+    "to": "other-agent.proofofclaw.eth",
+    "content": "Hello, want to collaborate?",
+    "timestamp": 1712234567,
+    "direction": "outbound"
+  }
+]
+
+// POST /api/messages/send
+// Request: { "to": "bob.proofofclaw.eth", "content": "Hello!" }
+// Response: { "success": true, "message_id": "msg-002", "timestamp": 1712234567 }</code></pre>
+</div>
+
+<div class="code-block fade-in">
+<div class="code-header"><span>GET /api/traces/stream (SSE)</span></div>
+<pre><code>// Server-Sent Events endpoint — powers the ZK Kanban board.
+// Each /api/chat call emits tool_invocation events followed by a proof_receipt.
+
+event: trace
+data: { "event": "connected", "agent_id": "my-agent", "session_id": "..." }
+
+event: trace
+data: { "event": "tool_invocation", "tool_name": "grep_search",
+        "input_hash": "0xabc...", "output_hash": "0xdef...",
+        "within_policy": true, "timestamp": 1712234567 }
+
+event: trace
+data: { "event": "proof_receipt", "proof_id": "0x...",
+        "journal_b64": "...", "seal_b64": "...", "image_id": "0x..." }</code></pre>
+</div>
+
+<h3 class="fade-in" style="margin-top:24px;">CORS Requirements</h3>
+<p class="fade-in" style="font-size:13px;color:var(--text-secondary);">Since the Proof of Claw frontend is a static site, your agent must return CORS headers:</p>
+<div class="code-block fade-in">
+<div class="code-header"><span>Required Headers</span></div>
+<pre><code>Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, OPTIONS
+Access-Control-Allow-Headers: Content-Type</code></pre>
+</div>
+
+<h3 class="fade-in" style="margin-top:24px;">Minimal Agent Examples</h3>
+
+<div class="code-block fade-in">
+<div class="code-header"><span>Python (Flask)</span></div>
+<pre><code>from flask import Flask, jsonify, request
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
+
+@app.route('/health')
+def health():
+    return 'ok'
+
+@app.route('/api/status')
+def status():
+    return jsonify({
+        'agent_id': 'my-python-agent',
+        'ens_name': 'my-agent.proofofclaw.eth',
+        'status': 'online',
+        'network': 'sepolia',
+        'allowed_tools': ['query'],
+        'endpoint_allowlist': [],
+        'max_value_autonomous_wei': '0',
+        'uptime_secs': 0,
+        'stats': {'total_actions': 0, 'proofs_generated': 0}
+    })
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    msg = request.json.get('message', '')
+    return jsonify({
+        'response': f'You said: {msg}',
+        'intent': {'action_type': 'query', 'confidence': 0.8},
+        'policy_result': {'allowed': True, 'approval_type': 'autonomous', 'checks': []},
+        'proof': {'proof_id': '0x0', 'status': 'pending', 'output_commitment': '0x0'}
+    })
+
+app.run(port=8420)</code></pre>
+</div>
+
+<div class="code-block fade-in">
+<div class="code-header"><span>Node.js (Express)</span></div>
+<pre><code>const express = require('express');
+const cors = require('cors');
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.get('/health', (req, res) =&gt; res.send('ok'));
+
+app.get('/api/status', (req, res) =&gt; res.json({
+  agent_id: 'my-node-agent',
+  ens_name: 'my-agent.proofofclaw.eth',
+  status: 'online',
+  network: 'sepolia',
+  allowed_tools: ['query'],
+  endpoint_allowlist: [],
+  max_value_autonomous_wei: '0',
+  uptime_secs: 0,
+  stats: { total_actions: 0, proofs_generated: 0 }
+}));
+
+app.post('/api/chat', (req, res) =&gt; res.json({
+  response: `You said: ${req.body.message}`,
+  intent: { action_type: 'query', confidence: 0.8 },
+  policy_result: { allowed: true, approval_type: 'autonomous', checks: [] },
+  proof: { proof_id: '0x0', status: 'pending', output_commitment: '0x0' }
+}));
+
+app.listen(8420);</code></pre>
+</div>
+
+<div style="background:rgba(0,229,255,0.06);border:1px solid var(--border-cyan);border-radius:8px;padding:16px;margin:20px 0;" class="fade-in">
+  <strong style="color:var(--cyan);">Minimum Viable Agent:</strong>
+  <span style="color:var(--text-secondary);font-size:13px;">Implement <code>/health</code>, <code>/api/status</code>, and <code>/api/chat</code> to connect and chat. All other endpoints are optional and enable additional features (dashboard activity, proofs explorer, messaging).</span>
+</div>
+
+<!-- CONFIG -->
+<h2 id="config" class="section-anchor fade-in"><span class="section-icon icon-cyan">&#x2699;</span> Configuration</h2>
+<p class="fade-in">Create a <code>.env</code> file in the agent directory:</p>
+
+<div class="code-block fade-in">
+  <div class="code-header">
+    <div class="code-header-left">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <div class="code-filename">.env</div>
+    </div>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <div class="code-body">
+<pre>AGENT_ID=alice-agent
+ENS_NAME=alice.proofofclaw.eth
+PRIVATE_KEY=0x...
+SIGNER_MODE=private-key
+RPC_URL=https://eth-sepolia.g.alchemy.com/v2/...
+CHAIN_ID=11155111
+ZERO_G_INDEXER_RPC=https://indexer-storage-testnet.0g.ai
+ZERO_G_COMPUTE_ENDPOINT=https://broker-testnet.0g.ai
+ZERO_G_CHAIN_RPC=https://evmrpc-testnet.0g.ai
+ZERO_G_CHAIN_ID=16602
+DM3_DELIVERY_SERVICE_URL=http://localhost:3001
+ALLOWED_TOOLS=swap_tokens,transfer,query
+ENDPOINT_ALLOWLIST=https://api.uniswap.org,https://api.0x.org
+MAX_VALUE_AUTONOMOUS_WEI=1000000000000000000
+API_PORT=8420</pre>
+  </div>
+</div>
+
+<div class="table-wrap fade-in">
+<table>
+  <thead>
+    <tr><th>Variable</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>AGENT_ID</code></td><td>Unique agent identifier</td></tr>
+    <tr><td><code>ENS_NAME</code></td><td>Agent's ENS subname for identity and DM3 messaging</td></tr>
+    <tr><td><code>PRIVATE_KEY</code></td><td>Agent server wallet private key (never commit this)</td></tr>
+    <tr><td><code>SIGNER_MODE</code></td><td><code>private-key</code> or <code>mnemonic</code></td></tr>
+    <tr><td><code>RPC_URL</code></td><td>Ethereum RPC endpoint (Alchemy, Infura, etc.)</td></tr>
+    <tr><td><code>CHAIN_ID</code></td><td>Target chain ID (default: 11155111 for Sepolia)</td></tr>
+    <tr><td><code>ZERO_G_INDEXER_RPC</code></td><td>0G Storage indexer endpoint</td></tr>
+    <tr><td><code>ZERO_G_COMPUTE_ENDPOINT</code></td><td>0G Compute broker endpoint</td></tr>
+    <tr><td><code>ZERO_G_CHAIN_RPC</code></td><td>0G Chain RPC (default: <code>https://evmrpc-testnet.0g.ai</code>)</td></tr>
+    <tr><td><code>ZERO_G_CHAIN_ID</code></td><td>0G Chain ID (default: 16602)</td></tr>
+    <tr><td><code>DM3_DELIVERY_SERVICE_URL</code></td><td>DM3 delivery service for encrypted messaging</td></tr>
+    <tr><td><code>ALLOWED_TOOLS</code></td><td>Comma-separated list of permitted tools</td></tr>
+    <tr><td><code>ENDPOINT_ALLOWLIST</code></td><td>Comma-separated external API URLs the agent may call</td></tr>
+    <tr><td><code>MAX_VALUE_AUTONOMOUS_WEI</code></td><td>Threshold above which Ledger approval is required (in wei)</td></tr>
+    <tr><td><code>API_PORT</code></td><td>Agent REST API port (default: 8420)</td></tr>
+    <tr><td><code>ETHERSCAN_API_KEY</code></td><td>Etherscan API key for contract verification</td></tr>
+    <tr><td><code>INFT_CONTRACT</code></td><td>ERC-7857 iNFT contract address (set after deployment)</td></tr>
+    <tr><td><code>SOULVAULT_SWARM_CONTRACT</code></td><td>SoulVault swarm coordination contract</td></tr>
+    <tr><td><code>ERC8004_REGISTRY_ADDRESS</code></td><td>ERC-8004 agent registry adapter contract</td></tr>
+    <tr><td><code>RISC_ZERO_VERIFIER_ADDRESS</code></td><td>On-chain RISC Zero proof verifier</td></tr>
+    <tr><td><code>RISC_ZERO_IMAGE_ID</code></td><td>Guest program image ID (from circuit compilation)</td></tr>
+    <tr><td><code>LEDGER_ORIGIN_TOKEN</code></td><td>Ledger DMK origin token (optional — for hardware-signed approvals)</td></tr>
+    <tr><td><code>EIP8004_IDENTITY_REGISTRY</code></td><td>EIP-8004 identity registry contract</td></tr>
+    <tr><td><code>EIP8004_INTEGRATION_CONTRACT</code></td><td>EIP-8004 integration bridge contract</td></tr>
+    <tr><td><code>SEPOLIA_RPC_URL</code></td><td>Sepolia RPC endpoint (for ENS and identity)</td></tr>
+    <tr><td><code>ENS_REGISTRY</code></td><td>ENS registry address (Sepolia: <code>0x00...2e1e</code>)</td></tr>
+    <tr><td><code>SWARM_HUB_URL</code></td><td>Swarm Protocol hub URL (optional — for swarm bridge)</td></tr>
+    <tr><td><code>BRIDGE_PORT</code></td><td>Swarm bridge WebSocket port (default: 3002)</td></tr>
+    <tr><td><code>GOOGLE_CLIENT_ID</code></td><td>Google OAuth client ID (optional — for calendar integration)</td></tr>
+    <tr><td><code>ONECLAW_API_KEY</code></td><td>1clawAI server API key (optional — for credential storage)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- REPO STRUCTURE -->
+<h2 id="repo-structure" class="section-anchor fade-in"><span class="section-icon icon-cyan">&#x2302;</span> Repository Structure</h2>
+<div class="code-block fade-in">
+  <div class="code-header">
+    <div class="code-header-left">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <div class="code-filename">project layout</div>
+    </div>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <div class="code-body">
+<pre>proof-of-claw/
+├── agent/                      <span class="cm"># Rust agent runtime (IronClaw workspace)</span>
+│   ├── crates/                 <span class="cm"># Core crates (engine, safety, skills, common)</span>
+│   └── src/
+│       ├── agent/              <span class="cm"># Agent loop, dispatcher, sessions</span>
+│       ├── channels/           <span class="cm"># Multi-channel input (HTTP, CLI, WebSocket, WASM)</span>
+│       ├── tools/              <span class="cm"># WASM sandbox, tool registry, MCP</span>
+│       ├── safety/             <span class="cm"># Policy engine, injection detector</span>
+│       └── integrations/       <span class="cm"># 0G, ENS, DM3, Ledger, EIP-8004, iNFT</span>
+├── zkvm/                       <span class="cm"># RISC Zero zkVM programs</span>
+│   ├── guest/                  <span class="cm"># Guest program (policy verification)</span>
+│   └── host/                   <span class="cm"># Host program (proof generation)</span>
+├── contracts/                  <span class="cm"># Solidity smart contracts (Foundry)</span>
+│   ├── src/
+│   │   ├── ProofOfClawVerifier.sol     <span class="cm"># ZK proof verification + routing</span>
+│   │   ├── ProofOfClawINFT.sol         <span class="cm"># ERC-7857 agent identity NFT</span>
+│   │   ├── SoulVaultSwarm.sol          <span class="cm"># Epoch-based swarm coordination</span>
+│   │   ├── EIP8004Integration.sol      <span class="cm"># EIP-8004 registry bridge</span>
+│   │   └── SoulVaultERC8004RegistryAdapter.sol
+│   ├── clear-signing/
+│   │   └── proofofclaw.json    <span class="cm"># ERC-7730 Ledger Clear Signing</span>
+│   └── script/
+│       ├── Deploy.s.sol        <span class="cm"># Sepolia deployment</span>
+│       ├── Deploy0G.s.sol      <span class="cm"># 0G Chain deployment</span>
+│       └── DeploySwarm.s.sol   <span class="cm"># Swarm + identity deployment</span>
+├── frontend/                   <span class="cm"># Web UI (vanilla HTML/CSS/JS)</span>
+│   ├── index.html              <span class="cm"># Landing page</span>
+│   ├── agents.html             <span class="cm"># Agent registry, wizard, chat</span>
+│   ├── dashboard.html          <span class="cm"># Monitoring dashboard</span>
+│   ├── messages.html           <span class="cm"># DM3 message threads</span>
+│   ├── proofs.html             <span class="cm"># ZK proof explorer</span>
+│   ├── soul-vault.html         <span class="cm"># Agent deployment interface</span>
+│   └── docs.html               <span class="cm"># Documentation (this page)</span>
+├── cli/                        <span class="cm"># TypeScript CLI tool (poc)</span>
+├── delivery-service/           <span class="cm"># DM3 message delivery (port 3001)</span>
+├── swarm-bridge/               <span class="cm"># Bridge to swarmprotocol.fun (port 3002)</span>
+├── 1claw-server/               <span class="cm"># 1clawAI credential storage (port 3456)</span>
+├── spec.md                     <span class="cm"># Full technical specification</span>
+├── ARCHITECTURE.md             <span class="cm"># System architecture</span>
+└── .env.example                <span class="cm"># Configuration reference</span></pre>
+  </div>
+</div>
+
+<!-- BOUNTIES -->
+<h2 id="bounties" class="section-anchor fade-in"><span class="section-icon icon-amber">&#x2605;</span> Target Bounties</h2>
+
+<div class="bounty-grid fade-in">
+  <div class="bounty-card">
+    <div class="bounty-sponsor" style="color: var(--cyan);">0G</div>
+    <div class="bounty-track">Best OpenClaw Agent on 0G</div>
+    <div class="bounty-prize">$6,000</div>
+    <div class="bounty-integration">0G Compute (inference), 0G Storage (memory + traces)</div>
+  </div>
+  <div class="bounty-card">
+    <div class="bounty-sponsor" style="color: var(--green);">ENS</div>
+    <div class="bounty-track">Best ENS Integration for AI Agents</div>
+    <div class="bounty-prize">$5,000</div>
+    <div class="bounty-integration">ENS subnames for agent identity, DM3 for encrypted messaging</div>
+  </div>
+  <div class="bounty-card">
+    <div class="bounty-sponsor" style="color: var(--amber);">Ledger</div>
+    <div class="bounty-track">AI Agents x Ledger</div>
+    <div class="bounty-prize">$6,000</div>
+    <div class="bounty-integration">Ledger DMK/DSK for human approval, Clear Signing (ERC-7730)</div>
+  </div>
+</div>
+
+<!-- STATUS -->
+<p class="fade-in" style="padding:1rem 1.25rem;border:1px solid rgba(255,183,77,0.3);border-radius:8px;background:rgba(255,183,77,0.06);color:var(--text-secondary);font-size:0.85rem;margin-bottom:1.5rem;">
+  <strong style="color:#ffb74d;">Testnet Notice</strong> &mdash; Proof of Claw is under active development. Contracts are deployed to 0G Galileo Testnet (chain 16602) and Sepolia, verified but unaudited. Do not use with real funds.
+</p>
+
+<h2 id="status" class="section-anchor fade-in"><span class="section-icon icon-green">&#x2714;</span> What's Working</h2>
+
+<div class="status-grid fade-in">
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">Rust Agent Runtime</span>
+    <span class="status-detail">Compiles cleanly, 35/35 tests pass. Full agent loop, intent router, REST API on port 8420.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">Policy Engine</span>
+    <span class="status-detail">Tool allowlist enforcement, value threshold checks, severity levels (Block/Warn/Sanitize/Pass).</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Basic</span>
+    <span class="status-name">Injection Detector</span>
+    <span class="status-detail">12 regex patterns with case-insensitive matching. Catches obvious attacks; not robust against paraphrasing, encoding, or multi-turn evasion.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">WASM Sandbox</span>
+    <span class="status-detail">Wasmtime-based isolated execution for untrusted tools with capability validation.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">Tool Registry</span>
+    <span class="status-detail">Content-addressable registration with SHA256 capability hashes. Built-in tools: swap, transfer, query.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">0G Compute</span>
+    <span class="status-detail">HTTP inference with attestation extraction, graceful fallback to content hash.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">0G Storage</span>
+    <span class="status-detail">Real 0G SDK integration &mdash; trace upload/retrieval with content-addressable root hashes, graceful degradation when offline.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">ENS + DM3</span>
+    <span class="status-detail">Full namehash, on-chain resolution, DM3 profile lookup with 3-tier fallback, encrypted messaging.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">EIP-8004</span>
+    <span class="status-detail">Identity registration, reputation queries, validation history, trust threshold checks with bootstrap phase.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">iNFT (ERC-7857)</span>
+    <span class="status-detail">Agent minting with soul backup &mdash; AES-GCM encrypted SOUL.md on 0G Storage, hash anchored on-chain.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">Proof Generator</span>
+    <span class="status-detail">Real RISC Zero proof generation via local prover or Boundless marketplace. Requires guest ELF to be built.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge partial">Compiles</span>
+    <span class="status-name">Smart Contracts</span>
+    <span class="status-detail">ProofOfClawVerifier, EIP8004Integration, ProofOfClawINFT &mdash; compile with Foundry. No test suite yet. Unaudited.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">RISC Zero Guest</span>
+    <span class="status-detail">Real zkVM guest program with full policy verification logic.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">Frontend UI</span>
+    <span class="status-detail">All 7 pages functional. Live API mode with real 0G Storage upload and AES-GCM encryption. Contract addresses populated from 0G testnet deployment.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">ENS Resolver (JS)</span>
+    <span class="status-detail">Real on-chain resolution via RPC, multi-network support (Sepolia, Mainnet, 0G).</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">Server Key Security</span>
+    <span class="status-detail">Startup requires real PRIVATE_KEY &mdash; no hardcoded demo private key fallback.</span>
+  </div>
+</div>
+
+<h2 id="incomplete" class="section-anchor fade-in"><span class="section-icon icon-amber">&#x26A0;</span> What's Incomplete</h2>
+
+<div class="status-grid fade-in">
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">Ledger Approval Gate</span>
+    <span class="status-detail">Real APDU communication via coins-ledger crate. EIP-712 typed data signing. Requires physical Ledger device with Ethereum app.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge working">Working</span>
+    <span class="status-name">RISC Zero Host</span>
+    <span class="status-detail">Real RISC Zero host program that generates proof receipts from execution traces.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge missing">Missing</span>
+    <span class="status-name">Contract Tests</span>
+    <span class="status-detail">Basic Foundry test file exists. 5 contracts deployed + verified on 0G Galileo Testnet.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge partial">Partial</span>
+    <span class="status-name">ERC-7730 Metadata</span>
+    <span class="status-detail">Contract addresses populated from 0G testnet deployment. Missing some method display formats.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge partial">Partial</span>
+    <span class="status-name">ProofOfClawINFT</span>
+    <span class="status-detail"><code>balanceOf()</code> is O(n) without owner mapping. Missing <code>safeTransferFrom</code> receiver validation.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge partial">In-memory</span>
+    <span class="status-name">Job Scheduler</span>
+    <span class="status-detail">Basic HashMap-based tracking with no persistence. State lost on restart.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge missing">Missing</span>
+    <span class="status-name">E2E Integration Test</span>
+    <span class="status-detail">End-to-end test pipeline: agent &rarr; 0G Storage &rarr; RISC Zero proof &rarr; on-chain verification.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge missing">Missing</span>
+    <span class="status-name">Multi-Chain Deployment</span>
+    <span class="status-detail">Deployment scripts and ERC-7730 metadata for chains beyond 0G Galileo.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge partial">Polling</span>
+    <span class="status-name">Agent Dashboard Updates</span>
+    <span class="status-detail">Currently uses HTTP polling. Real-time WebSocket push not yet implemented.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge missing">Missing</span>
+    <span class="status-name">DM3 Delivery Node</span>
+    <span class="status-detail">DM3 delivery service node setup for production message relay.</span>
+  </div>
+  <div class="status-row">
+    <span class="status-badge missing">Missing</span>
+    <span class="status-name">IronClaw Integration Tests</span>
+    <span class="status-detail">Full integration mode testing for the IronClaw runtime.</span>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="docs-footer">
+  <div class="footer-logo"><img src="public/logoproofofclaw.png" alt="Proof of Claw" style="height:40px;vertical-align:middle;margin-right:8px;">Proof of Claw</div>
+  <div class="footer-text">Provable Private Agent Framework</div>
+  <div class="footer-stack">
+    <span>IronClaw</span>
+    <span>0G</span>
+    <span>ENS</span>
+    <span>DM3</span>
+    <span>RISC Zero</span>
+    <span>Ledger</span>
+
+  </div>
+</div>
+
+</main>
+</div>
+
+<script type="module" src="viem-client.js"></script>
+<script src="wallet.js"></script>
+<script src="nav.js"></script>
+<script src="shared.js"></script>
+<script>
+// Copy button
+function copyCode(btn) {
+  const code = btn.closest('.code-block').querySelector('pre').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── Sidebar Collapse ────────────────────────────────────────────────
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const docsWrapper = document.querySelector('.docs-wrapper');
+
+// Restore saved state
+if (localStorage.getItem('poc-sidebar-collapsed') === '1') {
+  sidebar.classList.add('collapsed');
+  sidebarToggle.innerHTML = '&#x203A;';
+  sidebarToggle.title = 'Expand sidebar';
+  document.documentElement.style.setProperty('--sidebar-width', '56px');
+}
+
+sidebarToggle.addEventListener('click', () => {
+  const isCollapsed = sidebar.classList.toggle('collapsed');
+  sidebarToggle.innerHTML = isCollapsed ? '&#x203A;' : '&#x2039;';
+  sidebarToggle.title = isCollapsed ? 'Expand sidebar' : 'Collapse sidebar';
+  document.documentElement.style.setProperty('--sidebar-width', isCollapsed ? '56px' : '280px');
+  localStorage.setItem('poc-sidebar-collapsed', isCollapsed ? '1' : '0');
+});
+
+// ── Dynamic Section Wrapping ────────────────────────────────────────
+// Wrap each h2 + its following content into collapsible .doc-section divs
+(function wrapSections() {
+  const main = document.querySelector('.docs-content');
+  const h2s = Array.from(main.querySelectorAll('h2.section-anchor'));
+
+  h2s.forEach(h2 => {
+    const section = document.createElement('div');
+    section.className = 'doc-section';
+    section.dataset.sectionId = h2.id;
+
+    // Create header wrapper
+    const header = document.createElement('div');
+    header.className = 'section-header';
+
+    // Add chevron
+    const chevron = document.createElement('span');
+    chevron.className = 'section-chevron';
+    chevron.innerHTML = '&#x25BC;';
+
+    // Create body wrapper
+    const body = document.createElement('div');
+    body.className = 'section-body';
+
+    // Insert section before the h2
+    h2.parentNode.insertBefore(section, h2);
+
+    // Move h2 into header
+    header.appendChild(h2);
+    header.appendChild(chevron);
+    section.appendChild(header);
+
+    // Move siblings until next h2 or doc-section into body
+    let next = section.nextSibling;
+    while (next) {
+      const following = next.nextSibling;
+      if (next.nodeType === 1 && (next.tagName === 'H2' || next.classList?.contains('doc-section') || next.classList?.contains('docs-footer'))) break;
+      body.appendChild(next);
+      next = following;
+    }
+
+    section.appendChild(body);
+
+    // Toggle on header click
+    header.addEventListener('click', () => {
+      section.classList.toggle('collapsed');
+    });
+  });
+})();
+
+// Expand / Collapse All
+function expandAllSections() {
+  document.querySelectorAll('.doc-section').forEach(s => s.classList.remove('collapsed'));
+}
+
+function collapseAllSections() {
+  document.querySelectorAll('.doc-section').forEach(s => s.classList.add('collapsed'));
+}
+
+// ── Sidebar Active Link Tracking ────────────────────────────────────
+(function() {
+  const links = document.querySelectorAll('.sidebar-link');
+  const sections = [];
+  links.forEach(link => {
+    const id = link.getAttribute('href').slice(1);
+    const el = document.getElementById(id);
+    if (el) sections.push({ el, link });
+  });
+
+  function updateActive() {
+    let current = sections[0];
+    for (const s of sections) {
+      if (s.el.getBoundingClientRect().top <= 120) current = s;
+    }
+    links.forEach(l => l.classList.remove('active'));
+    if (current) current.link.classList.add('active');
+  }
+
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+})();
+
+// ── Fade-in on Scroll ───────────────────────────────────────────────
+(function() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+})();
+
+// ── Search with Auto-expand ─────────────────────────────────────────
+document.getElementById('docsSearch').addEventListener('input', function(e) {
+  const query = e.target.value.toLowerCase().trim();
+  const allElements = document.querySelectorAll('.docs-content h2, .docs-content h3, .docs-content p, .docs-content li, .docs-content td');
+  const allSections = document.querySelectorAll('.doc-section');
+
+  if (!query) {
+    allElements.forEach(el => { el.style.opacity = ''; });
+    return;
+  }
+
+  // Reset all opacities
+  allElements.forEach(el => { el.style.opacity = '0.2'; });
+
+  // Find and highlight matches, auto-expand their parent sections
+  const matchedSections = new Set();
+  allElements.forEach(el => {
+    if (el.textContent.toLowerCase().includes(query)) {
+      el.style.opacity = '1';
+      // Find parent .doc-section and expand it
+      const parentSection = el.closest('.doc-section');
+      if (parentSection) {
+        matchedSections.add(parentSection);
+        parentSection.classList.remove('collapsed');
+      }
+    }
+  });
+});
+
+// ── Sidebar link: expand target section + scroll ────────────────────
+document.querySelectorAll('.sidebar-link').forEach(link => {
+  link.addEventListener('click', (e) => {
+    const id = link.getAttribute('href').slice(1);
+    const section = document.querySelector(`.doc-section[data-section-id="${id}"]`);
+    if (section) section.classList.remove('collapsed');
+
+    // Close mobile menu
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('mobileOverlay').classList.remove('open');
+  });
+});
+
+// ── Mobile Menu Toggle ──────────────────────────────────────────────
+function toggleMobileMenu() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('mobileOverlay').classList.toggle('open');
+  var btn = document.querySelector('.nav-hamburger');
+  var expanded = btn.getAttribute('aria-expanded') === 'true';
+  btn.setAttribute('aria-expanded', String(!expanded));
+}
+</script>
+
+</body>
+</html>

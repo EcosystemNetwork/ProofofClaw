@@ -1,0 +1,14 @@
+[workspace]
+members = ["guest", "host", "image-id"]
+exclude = ["wasm-verifier", "boundless-prover"]
+resolver = "2"
+
+[profile.release]
+opt-level = 3
+lto = true
+
+[workspace.dependencies]
+risc0-zkvm = { version = "1.2" }
+risc0-build = { version = "1.2" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
